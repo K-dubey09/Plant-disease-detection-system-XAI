@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Adaptive launcher foreground. Safe zone is the inner 72dp (centered), so the leaf
+         occupies ~60dp around (54,54) within the 108dp canvas. -->
+    <path
+        android:fillColor="#A5D6A7"
+        android:pathData="M54,24 C40,33 33,48 36,63 C39,72 48,75 54,75 C60,75 69,72 72,63 C75,48 68,33 54,24 Z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.2"
+        android:pathData="M54,28 L54,72" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.6"
+        android:pathData="M54,36 C49,38 45,42 44,47 M54,36 C59,38 63,42 64,47 M54,44 C51,45 48,48 47,52 M54,44 C57,45 60,48 61,52 M54,52 C52,53 50,55 49,57 M54,52 C56,53 58,55 59,57" />
+</vector>

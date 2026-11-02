@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Room DB + images are user data and SHOULD be backed up (encrypted-at-rest via file-based
+         encryption on supported devices). PIN material is excluded — it lives in EncryptedSharedPreferences
+         keyed to the Android Keystore and must never be backed up. -->
+    <include domain="database" path="leafguard.db" />
+    <include domain="file" path="scans/" />
+    <exclude domain="sharedpref" path="leafguard_secure.xml" />
+</full-backup-content>

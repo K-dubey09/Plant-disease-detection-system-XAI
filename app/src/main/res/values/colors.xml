@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Brand: botanical green -->
+    <color name="leaf_green_primary">#1B5E20</color>
+    <color name="leaf_green_variant">#2E7D32</color>
+    <color name="leaf_green_light">#A5D6A7</color>
+    <color name="leaf_amber">#F59E0B</color>
+    <color name="leaf_clay">#B45309</color>
+
+    <!-- XAI heatmap anchor -->
+    <color name="xai_heat_high">#D32F2F</color>
+    <color name="xai_heat_low">#1565C0</color>
+
+    <!-- Launcher icon background -->
+    <color name="ic_launcher_background">#1B5E20</color>
+</resources>

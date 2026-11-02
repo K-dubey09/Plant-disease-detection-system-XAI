@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LeafGuard</string>
+    <string name="app_tagline">Explainable plant disease detection</string>
+
+    <!-- Auth -->
+    <string name="auth_register_title">Create your LeafGuard account</string>
+    <string name="auth_login_title">Enter your PIN</string>
+    <string name="auth_name">Display name</string>
+    <string name="auth_pin">PIN (6 digits)</string>
+    <string name="auth_pin_confirm">Confirm PIN</string>
+    <string name="auth_register_button">Register</string>
+    <string name="auth_login_button">Unlock</string>
+    <string name="auth_error_pin_mismatch">PINs do not match.</string>
+    <string name="auth_error_pin_format">PIN must be exactly 6 digits.</string>
+    <string name="auth_error_wrong_pin">Incorrect PIN. Try again.</string>
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_plants">Plants</string>
+    <string name="nav_scan">Scan</string>
+    <string name="nav_history">History</string>
+    <string name="nav_records">Records</string>
+    <string name="nav_images">Images</string>
+
+    <!-- Common -->
+    <string name="action_back">Back</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="coming_soon">This screen ships in a later phase.</string>
+    <string name="placeholder_phase">%1$s is implemented in Phase %2$d.</string>
+
+    <!-- Scan -->
+    <string name="scan_title">Scan a leaf</string>
+    <string name="scan_hint">Center a single leaf in the frame and hold steady.</string>
+    <string name="scan_capture">Capture</string>
+    <string name="scan_import">Import photo</string>
+    <string name="scan_analyzing">Running on-device inference…</string>
+
+    <!-- Results / XAI -->
+    <string name="result_confidence">Confidence</string>
+    <string name="result_explanation">Why this prediction (Grad-CAM)</string>
+    <string name="result_save_to_plant">Save to plant</string>
+    <string name="result_save_new">Save as new plant</string>
+
+    <!-- Assets -->
+    <string name="asset_model" translatable="false">models/plant_disease_mobilenetv2.tflite</string>
+    <string name="asset_labels" translatable="false">models/labels.txt</string>
+    <string name="asset_suggestions" translatable="false">models/disease_suggestions.json</string>
+</resources>

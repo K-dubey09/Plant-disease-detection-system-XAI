@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base theme is overridden by the Compose Material3 theme at runtime; this is the splash + window shell. -->
+    <style name="Theme.LeafGuard" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.LeafGuard.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/leaf_green_primary</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_leaf_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.LeafGuard</item>
+    </style>
+</resources>
