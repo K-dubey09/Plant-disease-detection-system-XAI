@@ -1,5 +1,6 @@
 package com.leafguard.app.ui.scan
 
+import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,6 +13,9 @@ import com.leafguard.app.data.local.ScanEntity
 import com.leafguard.app.di.IoDispatcher
 import com.leafguard.app.domain.repository.ScanRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
+import java.io.FileOutputStream
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +40,7 @@ class ScanViewModel @Inject constructor(
     private val suggestionEngine: SuggestionEngine,
     private val holder: ScanResultHolder,
     private val scanRepository: ScanRepository,
+    @ApplicationContext private val context: Context,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : ViewModel() {
 
@@ -60,12 +65,16 @@ class ScanViewModel @Inject constructor(
                 val suggestion = suggestionEngine.suggest(diagnosis.topLabel)
                 _ui.value = UiState.Analyzing("Saving scan…")
                 val scanId = withContext(io) {
+                    val sourcePath = saveBitmap(bitmap, "source", Bitmap.CompressFormat.JPEG)
+                    val saliencyPath = saveBitmap(saliency, "saliency", Bitmap.CompressFormat.PNG)
                     scanRepository.saveScan(
                         ScanEntity(
                             plantId = plantId,
                             labelName = diagnosis.topLabel.name,
                             labelCondition = diagnosis.topLabel.condition,
                             confidence = diagnosis.topConfidence,
+                            sourceImagePath = sourcePath,
+                            saliencyImagePath = saliencyPath,
                         )
                     )
                 }
@@ -80,4 +89,21 @@ class ScanViewModel @Inject constructor(
     fun reset() {
         _ui.value = UiState.Idle
     }
+
+    /**
+     * Persists a [Bitmap] to internal storage (filesDir/scans/) so the Phase 6 Images gallery can
+     * render it later without the in-memory copy (which is held by [ScanResultHolder] only for the
+     * active result screen and is lost on process death). Returns the absolute path, or null on
+     * failure so the scan still saves its metadata when image persistence is unavailable.
+     */
+    private fun saveBitmap(bitmap: Bitmap, prefix: String, format: Bitmap.CompressFormat): String? =
+        try {
+            val dir = File(context.filesDir, "scans").apply { mkdirs() }
+            val ext = if (format == Bitmap.CompressFormat.JPEG) "jpg" else "png"
+            val file = File(dir, "scan_${System.currentTimeMillis()}_$prefix.$ext")
+            FileOutputStream(file).use { out -> bitmap.compress(format, 90, out) }
+            file.absolutePath
+        } catch (e: Exception) {
+            null
+        }
 }

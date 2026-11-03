@@ -20,7 +20,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): LeafGuardDatabase =
         Room.databaseBuilder(context, LeafGuardDatabase::class.java, LeafGuardDatabase.NAME)
-            .addMigrations(LeafGuardDatabase.MIGRATION_1_2)
+            .addMigrations(LeafGuardDatabase.MIGRATION_1_2, LeafGuardDatabase.MIGRATION_2_3)
             .build()
 
     @Provides

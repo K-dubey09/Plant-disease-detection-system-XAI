@@ -35,7 +35,7 @@ object PdfExporter {
         val doc = PdfDocument()
         try {
             val title = Paint().apply {
-                textSize = 18f; isFakeBold = true; color = Color.parseColor("#3b3a36")
+                textSize = 18f; setFakeBoldText(true); color = Color.parseColor("#3b3a36")
             }
             val meta = Paint().apply { textSize = 10f; color = Color.GRAY }
             val body = Paint().apply { textSize = 10f; color = Color.BLACK }

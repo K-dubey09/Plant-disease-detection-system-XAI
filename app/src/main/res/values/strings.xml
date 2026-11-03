@@ -98,6 +98,17 @@
     <string name="records_empty_title">No scans to export</string>
     <string name="records_empty_body">Run scans from the Scan tab to build a per-plant disease log you can export as CSV or PDF.</string>
 
+    <!-- Images (Phase 6) -->
+    <string name="images_group_header">%1$s · %2$d images</string>
+    <string name="images_unattached">Unattached</string>
+    <string name="images_source_label">Leaf</string>
+    <string name="images_source_desc">Captured leaf</string>
+    <string name="images_overlay_label">Saliency</string>
+    <string name="images_overlay_desc">Occlusion-sensitivity overlay</string>
+    <string name="images_card_meta">%1$s · %2$s</string>
+    <string name="images_empty_title">No scan images yet</string>
+    <string name="images_empty_body">Scan a leaf from the Scan tab to start your image gallery. Each scan\'s leaf and its explanation overlay appear here, grouped by plant.</string>
+
     <!-- Results / XAI -->
     <string name="result_title">Scan result</string>
     <string name="result_confidence">Confidence</string>

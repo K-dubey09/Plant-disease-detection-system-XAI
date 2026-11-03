@@ -11,13 +11,15 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * NULL so a plant's diagnosis history survives its deletion). `exportSchema = false` keeps the
  * build lean for now; enable it once the schema stabilizes before production.
  *
- * Version 2 ships the scans table; [MIGRATION_1_2] adds it for existing v1 installs so an
- * in-place app upgrade does not lose the user's plants (Room throws IllegalStateException on a
- * version bump without a migration or fallbackToDestructiveMigration).
+ * Version 2 ships the scans table; [MIGRATION_1_2] adds it for existing v1 installs. Version 3
+ * (Phase 6 Images) adds [ScanEntity.sourceImagePath] / [saliencyImagePath] so the gallery can
+ * render past scan images; [MIGRATION_2_3] ALTER-TABLEs the two nullable columns in place, so an
+ * upgrade preserves every prior scan and plant. Room throws IllegalStateException on a version
+ * bump without a migration or fallbackToDestructiveMigration, so both migrations are registered.
  */
 @Database(
     entities = [Plant::class, ScanEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class LeafGuardDatabase : RoomDatabase() {
@@ -45,6 +47,14 @@ abstract class LeafGuardDatabase : RoomDatabase() {
                     """.trimIndent(),
                 )
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_scans_plantId` ON `scans` (`plantId`)")
+            }
+        }
+
+        /** Phase 6 Images: add nullable image-path columns to `scans` for the gallery. */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE scans ADD COLUMN sourceImagePath TEXT")
+                database.execSQL("ALTER TABLE scans ADD COLUMN saliencyImagePath TEXT")
             }
         }
     }
