@@ -159,3 +159,14 @@ dependencies {
     androidTestImplementation(libs.hilt.android.testing)
     kspAndroidTest(libs.hilt.compiler)
 }
+
+// Bound the forked test JVM so the unit-test runner does not OOM alongside the Gradle daemon in
+// memory-constrained environments (the runner only hosts JUnit + Truth/Mockk/Turbine, no app
+// framework). Also caps the daemon-side managed metaspace via gradle.properties.
+tasks.withType<Test>().configureEach {
+    maxHeapSize = "512m"
+    jvmArgs("-XX:MaxMetaspaceSize=256m", "-XX:+UseSerialGC")
+    // Robolectric is on the classpath but no test uses it; prevent it from downloading Android
+    // SDK jars on first run (keeps the test JVM lean and offline).
+    systemProperty("robolectric.offline", "true")
+}

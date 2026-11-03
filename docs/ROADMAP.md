@@ -28,22 +28,34 @@ This sandbox has no Android SDK, so an automated build is run in CI on push.
 
 ---
 
-## Phase 2 — PIN authentication & session gating 🔜
+## Phase 2 — PIN authentication & session gating ✅
 
 **Goal:** first launch forces registration; returning users unlock with their 6-digit PIN.
 
 **Deliverables**
 - `PinStore` over `EncryptedSharedPreferences` keyed to the Android Keystore: stores a
-  salted, Keystore-HMAC'd PIN digest (never the raw PIN) + display name + registration timestamp.
-- `AuthRepository`, `AuthViewModel` exposing `AuthState` (`Unregistered | Locked | Unlocked`).
-- `AuthScreen` wired to the ViewModel: validation (6-digit, confirm-match, wrong-PIN).
-- Start-destination gating in `LeafGuardNavHost`: register → login → main graph.
-- Optional biometric (BiometricPrompt) unlock path behind a setting.
-- Unit tests: PIN validation rules, `PinStore` HMAC round-trip with Robolectric.
+  salted, PBKDF2-HMAC-SHA256 derived key (100k iterations; the raw PIN is never persisted) +
+  display name + registration timestamp.
+- `PinHasher` (pure JDK crypto, JVM-unit-testable) + `PinValidator` (6-digit rules).
+- `AuthRepository`/`AuthRepositoryImpl` exposing `StateFlow<AuthState>` (`Unregistered |
+  Locked | Unlocked`); `register`/`login`/`logout`/`reset`.
+- `AuthViewModel` (Hilt) exposing `authState` + a one-shot `failure: StateFlow<AuthFailure?>`.
+- `AuthScreen` rewired to the ViewModel (register/login modes, validation, reset dialog).
+- NavHost auth gating: an `AUTH_ROOT` launcher routes to register/login/dashboard from
+  `AuthState`; the gating effect only force-navigates while on an auth route, so in-app
+  navigation is never hijacked.
+- Hilt `SecurityModule` + `RepositoryModule` (incl. an `@IoDispatcher` qualifier).
+- Tests: `PinHasherTest`, `PinValidatorTest`, `AuthRepositoryImplTest` (fake `PinStore`),
+  `AuthViewModelTest` (fake repository, `Dispatchers.setMain`), `RoutesTest` — **38 JVM unit
+  tests, all passing locally.** Instrumented `EncryptedPinStoreTest` for the real Keystore
+  round-trip on a device.
+
+**Validation:** `./gradlew :app:assembleDebug` produces a 43.9 MB debug APK; `./gradlew
+:app:testDebugUnitTest` runs 38 tests with 0 failures. CI runs the same on push.
 
 ---
 
-## Phase 3 — Room persistence & Plants CRUD ⏳
+## Phase 3 — Room persistence & Plants CRUD 🔜
 
 **Goal:** the data backbone for plants, scans, history, and records.
 

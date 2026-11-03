@@ -11,6 +11,7 @@ package com.leafguard.app.ui.navigation
 object Routes {
 
     // --- Auth flow (Phase 2) ---
+    const val AUTH_ROOT = "auth"                 // launcher: routes to register/login/dashboard from auth state
     const val REGISTER = "auth/register"
     const val LOGIN = "auth/login"
 

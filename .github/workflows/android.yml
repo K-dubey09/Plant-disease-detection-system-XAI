@@ -6,11 +6,19 @@ on:
   pull_request:
     branches: [ main, master ]
 
+# Do not let extra CI runs pile up on rapid pushes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build, unit test, lint
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
+
+    env:
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.caching=true"
 
     steps:
       - name: Checkout
@@ -22,12 +30,24 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platforms;android-35
-            build-tools;35.0.0
+      # The ubuntu-latest runner ships with the Android SDK preinstalled at
+      # $ANDROID_HOME (/usr/local/lib/android/sdk) with licenses pre-accepted. We only ensure
+      # the exact platform/build-tools our build targets are present, using a direct sdkmanager
+      # call (the android-actions/setup-android@v3 "packages" input mangled the package name and
+      # failed with "Failed to find package 'platforms;android-35" in a prior run).
+      - name: Ensure Android platform 35 + build-tools
+        shell: bash
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+        run: |
+          set -e
+          SDKMGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMGR" ]; then
+            SDKMGR="$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | head -1)"
+          fi
+          echo "Using sdkmanager: $SDKMGR"
+          yes | "$SDKMGR" --licenses >/dev/null 2>&1 || true
+          yes | "$SDKMGR" "platforms;android-35" "build-tools;35.0.0" >/dev/null
 
       - name: Cache Gradle
         uses: actions/cache@v4
@@ -42,13 +62,13 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Run unit tests
-        run: ./gradlew test --no-daemon --stacktrace
+        run: ./gradlew test --stacktrace
 
       - name: Run Android Lint
-        run: ./gradlew lintDebug --no-daemon --stacktrace
+        run: ./gradlew lintDebug --stacktrace
 
       - name: Upload debug APK
         if: always()
@@ -66,4 +86,5 @@ jobs:
           path: |
             app/build/reports/tests/
             app/build/reports/lint-results*.html
+            app/build/test-results/
           if-no-files-found: warn

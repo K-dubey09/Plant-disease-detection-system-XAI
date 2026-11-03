@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -26,26 +26,30 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafguard.app.R
+import com.leafguard.app.domain.model.AuthFailure
+import com.leafguard.app.ui.auth.AuthViewModel
 import com.leafguard.app.ui.components.LeafScaffold
 
 /**
- * PIN-based authentication screen skeleton.
- *
- * Two modes share one composable: REGISTER (first launch, name + 6-digit PIN + confirm) and
- * LOGIN (returning user, 6-digit PIN). The UI is fully built and interactive here so the
- * navigation flow can be demonstrated; the actual credential persistence (EncryptedSharedPreferences
- * keyed to the Android Keystore, biometric fallback) and the `onAuthenticated` gating land in
- * Phase 2. Pressing the primary button calls [onAuthenticated] unconditionally for now.
+ * PIN-based authentication screen. Two modes share one composable: REGISTER (first launch)
+ * and LOGIN (returning user). Field state is local to the composable; authentication runs
+ * through [AuthViewModel], whose [AuthViewModel.authState] is observed by the navigation
+ * graph to move the user into the main app on success.
  */
 @Composable
 fun AuthScreen(
     mode: AuthScreen.Mode,
-    onAuthenticated: () -> Unit,
+    viewModel: AuthViewModel,
 ) {
     var name by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }
     var pinConfirm by remember { mutableStateOf("") }
+    var showResetDialog by remember { mutableStateOf(false) }
+
+    val failure by viewModel.failure.collectAsStateWithLifecycle()
+    val busy by viewModel.busy.collectAsStateWithLifecycle()
 
     val title = when (mode) {
         AuthScreen.Mode.REGISTER -> stringResource(R.string.auth_register_title)
@@ -77,20 +81,30 @@ fun AuthScreen(
             if (mode == AuthScreen.Mode.REGISTER) {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = { value ->
+                        name = value
+                        viewModel.clearFailure()
+                    },
                     label = { Text(stringResource(R.string.auth_name)) },
                     singleLine = true,
+                    isError = failure == AuthFailure.NAME_BLANK,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
 
             OutlinedTextField(
                 value = pin,
-                onValueChange = { value -> if (value.all { it.isDigit() } && value.length <= 6) pin = value },
+                onValueChange = { value ->
+                    if (value.all { it.isDigit() } && value.length <= 6) {
+                        pin = value
+                        viewModel.clearFailure()
+                    }
+                },
                 label = { Text(stringResource(R.string.auth_pin)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                 visualTransformation = PasswordVisualTransformation(),
+                isError = failure == AuthFailure.INVALID_PIN_FORMAT || failure == AuthFailure.WRONG_PIN,
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -98,18 +112,39 @@ fun AuthScreen(
                 OutlinedTextField(
                     value = pinConfirm,
                     onValueChange = { value ->
-                        if (value.all { it.isDigit() } && value.length <= 6) pinConfirm = value
+                        if (value.all { it.isDigit() } && value.length <= 6) {
+                            pinConfirm = value
+                            viewModel.clearFailure()
+                        }
                     },
                     label = { Text(stringResource(R.string.auth_pin_confirm)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     visualTransformation = PasswordVisualTransformation(),
+                    isError = failure == AuthFailure.PIN_MISMATCH,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            failure?.let { f ->
+                Text(
+                    text = stringResource(f.toRes()),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
 
             Button(
-                onClick = onAuthenticated,
+                onClick = {
+                    if (mode == AuthScreen.Mode.REGISTER) {
+                        viewModel.register(name, pin, pinConfirm)
+                    } else {
+                        viewModel.login(pin)
+                    }
+                },
+                enabled = !busy,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
@@ -122,7 +157,9 @@ fun AuthScreen(
                 )
             }
 
-            TextButton(onClick = onAuthenticated) {
+            TextButton(onClick = {
+                if (mode == AuthScreen.Mode.LOGIN) showResetDialog = true else viewModel.reset()
+            }) {
                 Text(
                     text = if (mode == AuthScreen.Mode.REGISTER) {
                         "Already registered? Unlock instead"
@@ -132,15 +169,36 @@ fun AuthScreen(
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
-
-            Spacer(Modifier.size(8.dp))
-            Text(
-                text = stringResource(R.string.placeholder_phase, "Authentication", 2),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
         }
     }
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text(stringResource(R.string.app_name)) },
+            text = { Text(stringResource(R.string.auth_reset_confirm)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showResetDialog = false
+                    viewModel.reset()
+                }) { Text(stringResource(R.string.auth_reset_yes)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+}
+
+private fun AuthFailure.toRes(): Int = when (this) {
+    AuthFailure.NAME_BLANK -> R.string.auth_error_name_blank
+    AuthFailure.INVALID_PIN_FORMAT -> R.string.auth_error_pin_format
+    AuthFailure.PIN_MISMATCH -> R.string.auth_error_pin_mismatch
+    AuthFailure.ALREADY_REGISTERED -> R.string.auth_error_already_registered
+    AuthFailure.WRONG_PIN -> R.string.auth_error_wrong_pin
+    AuthFailure.NOT_REGISTERED -> R.string.auth_error_not_registered
 }
 
 object AuthScreen {

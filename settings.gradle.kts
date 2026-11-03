@@ -17,7 +17,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // TensorFlow Lite AARs are published to Maven Central; kept here for completeness.
     }
 }
 

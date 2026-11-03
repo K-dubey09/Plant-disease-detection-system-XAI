@@ -14,6 +14,11 @@
     <string name="auth_error_pin_mismatch">PINs do not match.</string>
     <string name="auth_error_pin_format">PIN must be exactly 6 digits.</string>
     <string name="auth_error_wrong_pin">Incorrect PIN. Try again.</string>
+    <string name="auth_error_name_blank">Please enter a display name.</string>
+    <string name="auth_error_already_registered">An account already exists on this device.</string>
+    <string name="auth_error_not_registered">No account found. Please register first.</string>
+    <string name="auth_reset_confirm">Reset LeafGuard and erase the local account?</string>
+    <string name="auth_reset_yes">Reset</string>
 
     <!-- Navigation -->
     <string name="nav_dashboard">Dashboard</string>

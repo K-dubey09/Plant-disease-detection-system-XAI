@@ -3,6 +3,7 @@ agp = "8.7.2"
 kotlin = "2.0.21"
 ksp = "2.0.21-1.0.28"
 coreKtx = "1.13.1"
+archCoreTesting = "2.2.0"
 lifecycle = "2.8.7"
 activityCompose = "1.9.3"
 composeBom = "2024.10.01"
@@ -91,7 +92,7 @@ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-co
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
-androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "coreKtx" }
+androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "archCoreTesting" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
