@@ -25,8 +25,8 @@ class DashboardViewModelTest {
     @After
     fun tearDown() { Dispatchers.resetMain() }
 
-    private fun scan(id: Long, plantId: Long? = null, condition: String = "Early blight") =
-        ScanEntity(id = id, plantId = plantId, labelName = "Tomato___Early_blight", labelCondition = condition, confidence = 0.92f)
+    private fun scan(id: Long, plantId: Long? = null, condition: String = "Early blight", createdAt: Long = 1_000L) =
+        ScanEntity(id = id, plantId = plantId, labelName = "Tomato___Early_blight", labelCondition = condition, confidence = 0.92f, createdAt = createdAt)
 
     @Test
     fun scans_emitInitialList() = runTest {
@@ -64,8 +64,8 @@ class DashboardViewModelTest {
         // scans.firstOrNull() as the most-recent diagnosis.
         val vm = DashboardViewModel(
             scanRepository = FakeScanRepository(listOf(
-                scan(1).copy(createdAt = 1_000L, condition = "Old"),
-                scan(2).copy(createdAt = 9_000L, condition = "New"),
+                scan(1, condition = "Old", createdAt = 1_000L),
+                scan(2, condition = "New", createdAt = 9_000L),
             )),
             plantRepository = FakePlantRepository(),
         )
