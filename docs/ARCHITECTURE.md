@@ -35,6 +35,8 @@
 | `DiseaseClassifier` | Data | 4 | Load Swin-Tiny model, preprocess 224×224, run inference (softmax baked in) |
 | `SaliencyGenerator` | Data | 4 | Occlusion-sensitivity heatmap (model-agnostic; TFLite exposes no conv gradients) |
 | `ScanViewModel` + CameraX (`PreviewView`/`ImageCapture`) | UI | 5 | Live capture → classify → saliency → persist `ScanEntity` → navigate `result/{scanId}` |
+| `DashboardViewModel` | UI | 6 | Live scan + plant lists → stats (counts, most-recent diagnosis) |
+| `HistoryViewModel` | UI | 6 | Join scans ↔ plant name in-memory; per-plant filter → `HistoryItem` list |
 | `SuggestionsEngine` | Domain | 7 | Map 38 classes → treatment steps + severity |
 
 ## Navigation graph

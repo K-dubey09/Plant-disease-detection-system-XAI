@@ -162,7 +162,7 @@ Swin-Tiny model); it now states the real on-device inference + advisory nature.
 
 ---
 
-## Phase 6 — Dashboard, History, Images, Records 🔜
+## Phase 6 — Dashboard, History, Images, Records 🔜 (History + Dashboard done)
 
 **Goal:** the information surfaces over accumulated scans.
 
@@ -173,6 +173,23 @@ Swin-Tiny model); it now states the real on-device inference + advisory nature.
 - `RecordsScreen`: structured per-plant disease log + CSV and PDF export.
 - ViewModels + Flow queries backing each.
 - Unit tests for aggregation queries; instrumented for list rendering.
+
+**Status (this increment):** History + Dashboard shipped.
+- `DashboardViewModel` exposes the live scan + plant lists (Eagerly started); `DashboardScreen`
+  renders a stats card (total scans, plants tracked, most-recent diagnosis with confidence % and
+  timestamp) above the existing Scan / Plants / Images quick-action cards. The placeholder text is
+  gone — stats are real and update live as scans/plants change anywhere in the app.
+- `HistoryViewModel` joins each persisted scan with its plant name in-memory (scans + plants are
+  small per-user lists) and applies a plant filter; `HistoryScreen` renders filter chips (All + one
+  per plant) over a `LazyColumn` of scan cards (condition, confidence %, plant / Unattached, date),
+  each tapping into `result/{scanId}` — reusing the Phase 5 addressable result route.
+- 11 new JVM tests: `DashboardViewModelTest` (4 — initial lists, empty, DESC-most-recent-first) and
+  `HistoryViewModelTest` (7 — plant-name resolve, unattached, deleted-plant→null, filter, unfilter,
+  DESC order, plants list). **85 JVM unit tests total.**
+
+**Remaining in Phase 6:** `RecordsScreen` (per-plant disease log + CSV/PDF export) and
+`ImagesScreen` (gallery of originals + overlays — this needs persisted image file paths in
+`ScanEntity`, currently out-of-scope since Phase 5 stores only metadata + in-memory Bitmaps).
 
 ---
 

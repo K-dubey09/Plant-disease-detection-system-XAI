@@ -157,7 +157,9 @@ fun LeafGuardNavHost(
                     onResult = { scanId -> navController.navigate(Routes.result(scanId)) },
                 )
             }
-            composable(Routes.HISTORY) { HistoryScreen() }
+            composable(Routes.HISTORY) {
+                HistoryScreen(onOpenScan = { scanId -> navController.navigate(Routes.result(scanId)) })
+            }
             composable(Routes.RECORDS) { RecordsScreen() }
 
             // --- Secondary ---
