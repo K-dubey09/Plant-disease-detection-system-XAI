@@ -18,3 +18,11 @@
 
 # Suppress R8 warnings for TFLite native peer classes.
 -dontwarn org.tensorflow.lite.**
+
+# Tink (pulled in transitively by androidx.security.crypto for the encrypted PIN store)
+# references com.google.errorprone.annotations.* -- compile-time-only annotations that are
+# intentionally absent from the runtime classpath. R8 full mode (the default for release
+# builds since AGP 8) treats the missing classes as a hard build error without this rule,
+# which breaks assembleRelease. The annotations have no runtime effect, so suppressing the
+# warning is safe.
+-dontwarn com.google.errorprone.annotations.**
