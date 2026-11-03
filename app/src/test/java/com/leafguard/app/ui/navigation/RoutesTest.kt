@@ -16,8 +16,9 @@ class RoutesTest {
     }
 
     @Test
-    fun result_includesId() {
-        assertThat(Routes.result(7L)).isEqualTo("result/7")
+    fun result_isNoArgRoute() {
+        // The result screen reads the latest scan from ScanResultHolder, so it takes no nav arg.
+        assertThat(Routes.result()).isEqualTo("result")
     }
 
     @Test

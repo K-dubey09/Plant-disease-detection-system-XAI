@@ -64,9 +64,23 @@
     <string name="scan_capture">Capture</string>
     <string name="scan_import">Import photo</string>
     <string name="scan_analyzing">Running on-device inference…</string>
+    <string name="scan_picker_empty">Choose a clear photo of a single leaf to analyze.</string>
+    <string name="scan_analyze">Analyze leaf</string>
+    <string name="scan_demo_banner">DEMO MODEL — predictions are a placeholder. The inference + explanation pipeline is real; swap in a trained PlantVillage .tflite for reliable diagnoses.</string>
 
     <!-- Results / XAI -->
+    <string name="result_title">Scan result</string>
     <string name="result_confidence">Confidence</string>
+    <string name="result_confidence_value">Plant: %1$s · Confidence: %2$s</string>
+    <string name="result_image_label">Leaf</string>
+    <string name="result_heatmap_label">Why (saliency)</string>
+    <string name="result_heatmap_caption">Red regions most influenced the prediction; blue regions least (occlusion sensitivity).</string>
+    <string name="result_alternatives">Other likely labels</string>
+    <string name="result_summary">What this means</string>
+    <string name="result_treatments">Suggested treatment</string>
+    <string name="result_prevention">Prevention</string>
+    <string name="result_scan_another">Scan another leaf</string>
+    <string name="result_none">No scan result yet. Run a scan from the Scan tab.</string>
     <string name="result_explanation">Why this prediction (Grad-CAM)</string>
     <string name="result_save_to_plant">Save to plant</string>
     <string name="result_save_new">Save as new plant</string>

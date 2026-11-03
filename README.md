@@ -5,9 +5,11 @@ with a TensorFlow Lite model and explains every prediction with a **Grad-CAM** s
 The user registers once with a 6-digit PIN, then tracks individual plants, scans leaves in real
 time, and builds a per-plant disease history with actionable treatment suggestions.
 
-> Status: **Phase 3 of 8 — Room persistence & Plants CRUD.** A Keystore-backed PIN gates the app;
-> plants now persist in a Room database with a real list/add/edit/delete UI. 50 JVM unit tests
-> pass. The launch-time white screen from Phase 2 (auth-root launcher race) is fixed.
+> Status: **Phase 4 of 8 — TFLite inference + explainable AI engine.** On-device classification
+> (MobileNetV2 + 38 PlantVillage classes) with an occlusion-sensitivity saliency heatmap and
+> advisory suggestions; scan a leaf photo to see a result + explanation. The model is a demo
+> (untrained head) — swap the `.tflite` for a trained one for real diagnoses. 66 JVM unit tests
+> pass; the APK installs cleanly over v0.3.0 (pinned debug signing).
 > See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the full phased plan and the PDF
 > `LeafGuard_Project_Plan.pdf` (in the repo root after Phase 1) for the design rationale.
 

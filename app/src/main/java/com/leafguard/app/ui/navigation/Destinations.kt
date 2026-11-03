@@ -25,10 +25,10 @@ object Routes {
     // --- Secondary destinations ---
     const val IMAGES = "images"
     const val PLANT_DETAIL = "plant/{plantId}"
-    const val RESULT = "result/{scanId}"
+    const val RESULT = "result"   // no arg: the result screen reads the latest scan from ScanResultHolder
 
     fun plantDetail(plantId: Long): String = "plant/$plantId"
-    fun result(scanId: Long): String = "result/$scanId"
+    fun result(): String = RESULT
     fun scanForPlant(plantId: Long?): String =
         if (plantId == null) SCAN else "$SCAN?plantId=$plantId"
 }

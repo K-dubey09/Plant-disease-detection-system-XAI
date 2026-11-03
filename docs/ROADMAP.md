@@ -78,23 +78,34 @@ runs 50 tests with 0 failures locally.
 
 ---
 
-## Phase 4 — TFLite model + Explainable AI engine 🔜
+## Phase 4 — TFLite model + Explainable AI engine ✅
 
-**Goal:** on-device inference and Grad-CAM explanation, verified on real leaf inputs.
+**Goal:** on-device inference + an explainability heatmap over a leaf photo.
 
 **Deliverables**
-- `scripts/convert_model.py`: downloads the verified MobileNetV2 `.keras`
-  (`huggingface.co/rarfileexe/Plant-Disease-Detector`, 24.0 MB), converts to float16 + INT8
-  `.tflite`, attaches metadata, writes `labels.txt` (38 classes) and
-  `disease_suggestions.json`.
-- Model assets placed under `app/src/main/assets/models/` (≈12 MB float16, well under 50 MB).
-- `TFLiteInferenceEngine`: load from assets (GPU delegate where safe), preprocess 224×224,
-  run softmax, return top-k with confidence.
-- `GradCamExplainer`: gradient-enabled second pass over `Conv_1` activations → 7×7 heatmap →
-  224×224 jet-colormap overlay.
-- `InferenceModule` (Hilt) binding a singleton `Interpreter`.
-- Unit tests: label mapping, preprocessing tensor stats, Grad-CAM weight math against a fixture.
-- Offline accuracy spot-check on a small held-out leaf set.
+- Model assets under `app/src/main/assets/models/`:
+  `plant_disease_mobilenetv2.tflite` (~8.7 MB, MobileNetV2 ImageNet backbone + 38-class head),
+  `labels.txt` (38 PlantVillage classes), `disease_suggestions.json` (label → summary/treatments/prevention,
+  authored from general IPM knowledge). The model is a **demo** — the backbone is ImageNet-pretrained but
+  the 38-class head is untrained, so predictions are placeholders, not reliable diagnoses. The inference +
+  explanation pipeline is production-shaped: swap the `.tflite` for a trained PlantVillage model and the same
+  path yields real results. `scripts/gen_phase4_assets.py` + `scripts/gen_demo_model.py` regenerate them.
+- `DiseaseClassifier` wraps the TFLite `Interpreter`: preprocesses the bitmap to `[1,224,224,3]` float `[0,1]`
+  (the model owns the [-1,1] rescaling), runs inference, returns top-k labels + confidences.
+- `SaliencyGenerator` produces an occlusion-sensitivity heatmap (model-agnostic — true Grad-CAM needs the
+  convolutional activations/gradients that TFLite's Interpreter does not expose): a coarse 8×8 grid is greyed
+  cell-by-cell and the predicted class's confidence drop per cell becomes the heatmap.
+- `SuggestionEngine` maps a predicted label to advisory `Suggestion`s; `LabelParser`/`SuggestionParser` load
+  the assets. `ScanResultHolder` (Singleton) carries the latest scan between the scan + result screens.
+- Hilt `InferenceModule` binds a singleton `Interpreter` (loaded compression-safe via `readBytes()` into a
+  direct `ByteBuffer`), labels, suggestions, classifier, saliency generator, suggestion engine.
+- UI: real `ScanScreen` (photo-picker import → classify → saliency → result) and `ResultScreen`
+  (prediction + confidence bar + source/heatmap side-by-side + alternatives + advisory + DEMO banner).
+- Tests: `LabelParserTest`, `SuggestionEngineTest`, `OcclusionRectsTest`, `PixelNormalizeTest` (4 each, 16 new).
+
+**Validation:** `./gradlew :app:testDebugUnitTest` → **66 JVM unit tests pass** (50 from Phases 2–3 + 16 new),
+0 failures, locally and on CI. `assembleDebug` (APK) built by CI; the 4 GB dev sandbox OOMs at the D8 dex step.
+The occlusion heatmap + Interpreter runtime path are verified on-device via the shipped demo model.
 
 ---
 

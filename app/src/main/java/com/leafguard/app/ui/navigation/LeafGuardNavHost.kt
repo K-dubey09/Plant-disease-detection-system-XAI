@@ -142,7 +142,7 @@ fun LeafGuardNavHost(
             }
             composable(Routes.SCAN) {
                 ScanScreen(
-                    onResult = { scanId -> navController.navigate(Routes.result(scanId)) },
+                    onResult = { navController.navigate(Routes.RESULT) },
                 )
             }
             composable(Routes.HISTORY) { HistoryScreen() }
@@ -160,11 +160,15 @@ fun LeafGuardNavHost(
                     onBack = { navController.popBackStack() },
                 )
             }
-            composable(
-                Routes.RESULT,
-                arguments = listOf(navArgument("scanId") { type = NavType.LongType }),
-            ) { entry ->
-                ResultScreen(scanId = entry.arguments?.getLong("scanId") ?: -1L)
+            composable(Routes.RESULT) {
+                ResultScreen(
+                    onBack = { navController.popBackStack() },
+                    onScanAnother = {
+                        navController.navigate(Routes.SCAN) {
+                            popUpTo(Routes.SCAN) { inclusive = true }
+                        }
+                    },
+                )
             }
         }
     }
