@@ -111,7 +111,12 @@ runs 50 tests with 0 failures locally.
 0 failures, locally and on CI. `assembleDebug` (APK) built by CI; the 4 GB dev sandbox OOMs at the D8 dex step.
 The TFLite conversion is verified off-device: the Swin FP32 model matches its ONNX reference to a mean max
 abs diff of 4.42×10⁻⁸ with 8/8 argmax agreement; the occlusion heatmap + Interpreter runtime path are
-exercised on-device via the trained Swin model (98.59% accuracy).
+exercised on-device via the trained Swin model (98.59% accuracy). The **signed release APK** is built by
+CI (keystore decoded from `KEYSTORE_BASE64`), signed with **v1 + v2 + v3** schemes
+(`enableV1Signing = true` in `build.gradle.kts` — AGP 8.x omits v1 by default once `minSdk ≥ 24`,
+which left a v2-only APK that some OEM installers rejected with "There was a problem parsing the
+package"; the v1 JAR signature is the one every installer understands), verified by an `apksigner
+verify` CI step that asserts v1 + v2 are present, and published as a raw `.apk` to GitHub Releases.
 
 ---
 
@@ -123,7 +128,7 @@ a plant.
 **Deliverables**
 - `ScanScreen` with CameraX `PreviewView` + `ImageAnalysis` (`KEEP_ONLY_LATEST`), capture button,
   import-from-gallery fallback.
-- `ScanViewModel`: on capture, run `TFLiteInferenceEngine` + `GradCamExplainer`, persist a
+- `ScanViewModel`: on capture, run `DiseaseClassifier` + `SaliencyGenerator`, persist a
   `ScanEntity` (image + overlay + diagnosis + timestamp), expose result id.
 - `ResultScreen`: top-1 class + confidence, Grad-CAM overlay image, "save to plant" /
   "save as new plant" actions; if `scan?plantId=` was used, auto-attach.

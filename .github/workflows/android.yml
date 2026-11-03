@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main, master ]
 
+# contents:write lets the `gh release create` step publish the signed APK as a Release asset
+# (a raw .apk download with no artifact-zip wrapping). All other permissions default to none.
+permissions:
+  contents: write
+
 # Do not let extra CI runs pile up on rapid pushes.
 concurrency:
   group: ci-${{ github.ref }}
@@ -139,19 +144,27 @@ jobs:
       - name: Run Android Lint
         run: ./gradlew lintDebug --stacktrace
 
-      - name: Verify release APK is signed (if keystore was decoded)
+      - name: Verify release APK is signed (v1 + v2 required)
         if: env.KEYSTORE_FILE != ''
         shell: bash
         run: |
           set -euo pipefail
           APK="$(ls app/build/outputs/apk/release/*.apk | head -1)"
           echo "Release APK: $APK ($(stat -c%s "$APK") bytes)"
-          # apksigner verify prints "Verified using v1 scheme" / "v2 scheme" lines on success.
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK" || {
-            echo "WARNING: release APK signature verification failed -- install will show 'problem parsing the package'."
+          # --verbose prints "Verified using v1 scheme (RSA)" / "Verified using v2 scheme (...)" lines.
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/sigverify.txt
+          # v1 is the scheme every Android installer understands. AGP 8.x omits v1 by default
+          # when minSdk >= 24, producing a v2-only APK that some installers reject with
+          # "There was a problem parsing the package". build.gradle.kts forces v1+v2+v3; assert it here.
+          grep -q "Verified using v1 scheme" /tmp/sigverify.txt || {
+            echo "FAIL: v1 (JAR) signing is MISSING — the APK is v2-only and will not install on some devices."
             exit 1
           }
-          echo "Release APK is signed and installable."
+          grep -q "Verified using v2 scheme" /tmp/sigverify.txt || {
+            echo "FAIL: v2 signing is MISSING."
+            exit 1
+          }
+          echo "Release APK is signed with v1 + v2 (installable on all Android 8+ installers)."
 
       - name: Upload debug APK
         if: always()
@@ -168,6 +181,35 @@ jobs:
           name: leafguard-release-apk
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
+
+      # Publish the signed release APK as a GitHub Release asset. Release assets are served as
+      # RAW files (no upload-artifact ZIP wrapping), so a user downloads app-release.apk directly
+      # and taps to install — no extraction step. Runs only on main pushes that produced a signed
+      # release (KEYSTORE_FILE set); PRs and unsigned builds skip it. The v0.4.0 release is
+      # created once and the asset is clobbered on subsequent pushes, so the "latest" APK is
+      # always the most recent green build.
+      - name: Publish signed APK to GitHub Release
+        if: github.ref == 'refs/heads/main' && env.KEYSTORE_FILE != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          APK="$(ls app/build/outputs/apk/release/*.apk | head -1)"
+          ASSET="LeafGuard-v0.4.0-release.apk"
+          cp "$APK" "$ASSET"
+          TAG="v0.4.0"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ASSET" --clobber
+            echo "Updated existing release $TAG asset."
+          else
+            gh release create "$TAG" "$ASSET" \
+              --title "LeafGuard v0.4.0 — Swin-Tiny signed release" \
+              --notes "Signed release APK with the trained Swin-Tiny model (98.59% PlantVillage accuracy, 38 classes, 112 MB). Signed with v1 + v2 + v3 schemes — installs on all Android 8.0+ (minSdk 26) devices. Download the .apk and tap to install (no extraction needed)." \
+              --target main
+            echo "Created release $TAG."
+          fi
+          gh release view "$TAG" --json assets --jq '.assets[] | "Asset: \(.name)  \(.size) bytes  \(.url)"'
 
       - name: Upload test reports
         if: always()

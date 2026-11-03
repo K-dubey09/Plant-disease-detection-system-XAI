@@ -53,6 +53,15 @@ android {
             storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
             keyAlias = System.getenv("KEY_ALIAS") ?: ""
             keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+            // Force all three APK signature schemes. AGP 8.x disables v1 (JAR) by default once
+            // minSdk >= 24 (v1 is only strictly required for Android < 7.0), which leaves a
+            // v2-only APK. Several Android package installers (notably some OEM "Files" /
+            // package-installer paths) cannot parse a v2-only APK and report "There was a
+            // problem parsing the package". v1 is the one scheme every installer understands,
+            // so it is enabled explicitly here; v2 + v3 cover Android 7+ and key rotation.
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
         }
     }
 

@@ -19,8 +19,8 @@
 ┌───────────────┴──────────────────────────────────────────────────┐
 │  Data layer  (.../data)                                          │
 │  Room (entities, DAOs, LeafGuardDatabase), repositories,         │
-│  EncryptedSharedPreferences (PinStore), TFLiteInferenceEngine,    │
-│  GradCamExplainer. Hilt modules bind these to interfaces.        │
+│  EncryptedSharedPreferences (PinStore), DiseaseClassifier (TFLite), │
+│  SaliencyGenerator. Hilt modules bind these to interfaces.        │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -32,8 +32,8 @@
 | `AuthViewModel` / `PinStore` | UI / Data | 2 | Register, PIN login, Keystore-backed storage |
 | `LeafGuardDatabase`, entities, DAOs | Data | 3 | Plants, Scans, Records persistence |
 | `PlantRepository`, `ScanRepository` | Data | 3 | Single source of truth, Flow-based |
-| `TFLiteInferenceEngine` | Data | 4 | Load model, preprocess 224×224, run softmax |
-| `GradCamExplainer` | Data | 4 | Heatmap from final conv activations + gradients |
+| `DiseaseClassifier` | Data | 4 | Load Swin-Tiny model, preprocess 224×224, run inference (softmax baked in) |
+| `SaliencyGenerator` | Data | 4 | Occlusion-sensitivity heatmap (model-agnostic; TFLite exposes no conv gradients) |
 | `ScanViewModel` + CameraX | UI | 5 | Live preview, capture, wire to inference → result |
 | `SuggestionsEngine` | Domain | 7 | Map 38 classes → treatment steps + severity |
 
@@ -62,11 +62,13 @@ bottom-nav graph. Gating is implemented in Phase 2 via an auth-state `StateFlow`
   `Interpreter` single-thread dispatcher for TFLite, which is not thread-safe).
 - ViewModels expose `StateFlow<UiState>`; UI collects with `collectAsStateWithLifecycle`.
 - Inference is wrapped in a suspending `withContext(Dispatchers.Default)` call so the UI never
-  blocks; the Grad-CAM second pass shares the same dispatcher.
+  blocks; the occlusion-sensitivity second pass shares the same dispatcher.
 
 ## Memory budget (6 GB target)
 
-- TFLite interpreter footprint: ~15–25 MB resident (model + activation buffers for 224×224).
+- TFLite interpreter footprint: ~120–180 MB resident (the 112 MB Swin-Tiny FP32 model + the
+  224×224 activation buffers and the occlusion grid's per-cell re-inference). This is why the
+  app targets 6 GB+ RAM devices; a smaller float16/INT8 variant is feasible but not built yet.
 - CameraX preview: ImageAnalysis with `STRATEGY_KEEP_ONLY_LATEST` and `BACKPRESSURE` — one
   frame in flight, processed on a background thread, dropped if slow.
 - Room cursor windows paginated via `LIMIT/OFFSET` in list DAOs.
