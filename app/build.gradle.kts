@@ -19,11 +19,25 @@ android {
         // adaptive-icon + splash-screen pipeline clean and avoids legacy raster fallbacks.
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 3
+        versionName = "0.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+    }
+
+    // Pinned debug keystore (committed at app/keystores/debug.keystore, standard Android debug
+    // credentials) so every CI/local debug build shares ONE signer. Without this, GitHub-hosted
+    // runners regenerate ~/.android/debug.keystore each run, so successive debug APKs are signed
+    // with different keys and Android refuses to install a new build over an old one ("there was
+    // a problem parsing the package"). Debug keys are non-secret by convention.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("keystores/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
@@ -31,6 +45,7 @@ android {
             applicationIdSuffix = ".debug"
             isMinifyEnabled = false
             isDebuggable = true
+            signingConfig = signingConfigs.getByName("debug")
         }
         release {
             isMinifyEnabled = true
