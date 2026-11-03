@@ -31,12 +31,14 @@
 | `LeafGuardNavHost` | UI | 1 | Single NavHost; gates auth ↔ main app |
 | `AuthViewModel` / `PinStore` | UI / Data | 2 | Register, PIN login, Keystore-backed storage |
 | `LeafGuardDatabase` (Plant), `PlantDao`, `PlantRepository` | Data | 3 | Plants CRUD; single source of truth, Flow-based |
-| `ScanEntity`, `ScanDao`, `ScanRepository` | Data | 5 | Persisted scans; nullable plant FK (ON DELETE SET NULL); v1→v2 migration |
+| `ScanEntity`, `ScanDao`, `ScanRepository` | Data | 5/6 | Persisted scans; nullable plant FK (ON DELETE SET NULL); v3 adds `sourceImagePath`/`saliencyImagePath` for the gallery; v1→v2→v3 migrations |
 | `DiseaseClassifier` | Data | 4 | Load Swin-Tiny model, preprocess 224×224, run inference (softmax baked in) |
 | `SaliencyGenerator` | Data | 4 | Occlusion-sensitivity heatmap (model-agnostic; TFLite exposes no conv gradients) |
-| `ScanViewModel` + CameraX (`PreviewView`/`ImageCapture`) | UI | 5 | Live capture → classify → saliency → persist `ScanEntity` → navigate `result/{scanId}` |
+| `ScanViewModel` + CameraX (`PreviewView`/`ImageCapture`) | UI | 5/6 | Live capture → classify → saliency → save bitmaps to `filesDir/scans/` → persist `ScanEntity` (with image paths) → navigate `result/{scanId}` |
 | `DashboardViewModel` | UI | 6 | Live scan + plant lists → stats (counts, most-recent diagnosis) |
 | `HistoryViewModel` | UI | 6 | Join scans ↔ plant name in-memory; per-plant filter → `HistoryItem` list |
+| `RecordsViewModel` + `CsvGenerator` / `PdfExporter` | UI | 6 | Group scans by plant → per-plant disease log; pure RFC-4180 CSV (tested) + on-device `PdfDocument` PDF |
+| `ImagesViewModel` | UI | 6 | Group image-bearing scans (`sourceImagePath != null`) by plant → Coil `AsyncImage` gallery |
 | `SuggestionsEngine` | Domain | 7 | Map 38 classes → treatment steps + severity |
 
 ## Navigation graph

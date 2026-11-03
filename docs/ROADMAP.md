@@ -162,7 +162,7 @@ Swin-Tiny model); it now states the real on-device inference + advisory nature.
 
 ---
 
-## Phase 6 — Dashboard, History, Images, Records 🔜 (History + Dashboard done)
+## Phase 6 — Dashboard, History, Images, Records ✅
 
 **Goal:** the information surfaces over accumulated scans.
 
@@ -174,22 +174,37 @@ Swin-Tiny model); it now states the real on-device inference + advisory nature.
 - ViewModels + Flow queries backing each.
 - Unit tests for aggregation queries; instrumented for list rendering.
 
-**Status (this increment):** History + Dashboard shipped.
+**Status: complete (shipped across two increments).**
+
+*History + Dashboard:*
 - `DashboardViewModel` exposes the live scan + plant lists (Eagerly started); `DashboardScreen`
   renders a stats card (total scans, plants tracked, most-recent diagnosis with confidence % and
-  timestamp) above the existing Scan / Plants / Images quick-action cards. The placeholder text is
-  gone — stats are real and update live as scans/plants change anywhere in the app.
-- `HistoryViewModel` joins each persisted scan with its plant name in-memory (scans + plants are
-  small per-user lists) and applies a plant filter; `HistoryScreen` renders filter chips (All + one
-  per plant) over a `LazyColumn` of scan cards (condition, confidence %, plant / Unattached, date),
-  each tapping into `result/{scanId}` — reusing the Phase 5 addressable result route.
-- 11 new JVM tests: `DashboardViewModelTest` (4 — initial lists, empty, DESC-most-recent-first) and
-  `HistoryViewModelTest` (7 — plant-name resolve, unattached, deleted-plant→null, filter, unfilter,
-  DESC order, plants list). **85 JVM unit tests total.**
+  timestamp) above the Scan / Plants / Images quick-action cards.
+- `HistoryViewModel` joins each persisted scan with its plant name in-memory and applies a plant
+  filter; `HistoryScreen` renders filter chips (All + one per plant) over a `LazyColumn` of scan
+  cards, each tapping into the Phase 5 `result/{scanId}` route.
 
-**Remaining in Phase 6:** `RecordsScreen` (per-plant disease log + CSV/PDF export) and
-`ImagesScreen` (gallery of originals + overlays — this needs persisted image file paths in
-`ScanEntity`, currently out-of-scope since Phase 5 stores only metadata + in-memory Bitmaps).
+*Records:*
+- `RecordsViewModel` groups scans by plant (null = Unattached), resolves names in-memory, sorts
+  groups newest-scan-first; no `Context` in the VM so grouping is JVM-testable.
+- `RecordsScreen` shows per-plant cards + Export CSV / Export PDF buttons (write to the app cache
+  dir; result shown inline). `CsvGenerator` is a pure RFC-4180 generator (unit-tested); `PdfExporter`
+  uses the on-device `android.graphics.pdf.PdfDocument` (compiled + linted; CSV is the tested path).
+
+*Images:*
+- `ScanEntity` v3 adds `sourceImagePath` / `saliencyImagePath` (nullable paths to the captured leaf
+  + occlusion overlay saved to internal storage); Room v3 + `MIGRATION_2_3` (ALTER TABLE ADD COLUMN
+  x2) preserves every prior scan and plant in-place. `ScanViewModel` saves both bitmaps to
+  `filesDir/scans/` at scan time (JPEG source, PNG overlay) and passes the paths into the entity;
+  pre-Phase-6 scans (no stored image) are excluded from the gallery.
+- `ImagesViewModel` groups image-bearing scans by plant; `ImagesScreen` is a Coil `AsyncImage`
+  gallery — per-plant sections over `LazyRow`s of cards (source leaf + saliency overlay + condition
+  + date). Empty state.
+
+**Tests:** 24 new JVM tests this phase — `DashboardViewModelTest` (4), `HistoryViewModelTest` (7),
+`CsvGeneratorTest` (9), `RecordsViewModelTest` (8), `ImagesViewModelTest` (7). **109 JVM unit tests
+total.** CI run 41730838690 (commit `ed3f02d`) is fully green: debug + release build, 109 tests,
+lint, v1+v2 signing, GitHub Release publish (137.4 MB APK).
 
 ---
 
