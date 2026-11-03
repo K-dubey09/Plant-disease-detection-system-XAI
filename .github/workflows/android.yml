@@ -25,7 +25,7 @@ jobs:
       # `${{ secrets.X }}` (which would risk logging the secret). Empty when the secret is unset
       # (e.g. a fork PR), so the corresponding step is skipped gracefully.
       KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
-      KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -68,10 +68,13 @@ jobs:
       # real classifier instead of the untrained demo model committed in assets/. The Kaggle
       # dataset "plant-disease-xai-models" holds plant_disease.tflite (FP32, ~112 MB, Swin-Tiny,
       # 38 PlantVillage classes, 98.59% accuracy) plus labels.txt and metadata. Targeted at
-      # 6GB+ RAM devices. Skipped when KAGGLE_USERNAME/KAGGLE_KEY are unset (fork PRs) -- the
-      # committed demo model is then used and the build still works.
+      # 6GB+ RAM devices. Skipped when KAGGLE_USERNAME/KAGGLE_API_TOKEN are unset (fork PRs) -- the
+      # committed demo model is then used and the build still works. NOTE: Kaggle's newer KGAT_-prefixed
+      # API tokens authenticate ONLY via the KAGGLE_API_TOKEN env var, not the legacy
+      # KAGGLE_USERNAME/KAGGLE_KEY split (which 403s). KAGGLE_USERNAME is kept solely for the
+      # dataset slug (${KAGGLE_USERNAME}/plant-disease-xai-models).
       - name: Pull trained TFLite model from Kaggle
-        if: env.KAGGLE_USERNAME != '' && env.KAGGLE_KEY != ''
+        if: env.KAGGLE_USERNAME != '' && env.KAGGLE_API_TOKEN != ''
         shell: bash
         run: |
           set -euo pipefail
