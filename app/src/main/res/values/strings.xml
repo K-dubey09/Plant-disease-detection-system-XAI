@@ -62,6 +62,7 @@
     <string name="scan_title">Scan a leaf</string>
     <string name="scan_hint">Center a single leaf in the frame and hold steady.</string>
     <string name="scan_capture">Capture</string>
+    <string name="scan_captured_desc">Captured leaf image</string>
     <string name="scan_import">Import photo</string>
     <string name="scan_retake">Retake</string>
     <string name="scan_analyzing">Running on-device inference…</string>

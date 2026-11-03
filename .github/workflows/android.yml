@@ -185,7 +185,7 @@ jobs:
       # Publish the signed release APK as a GitHub Release asset. Release assets are served as
       # RAW files (no upload-artifact ZIP wrapping), so a user downloads app-release.apk directly
       # and taps to install — no extraction step. Runs only on main pushes that produced a signed
-      # release (KEYSTORE_FILE set); PRs and unsigned builds skip it. The v0.4.0 release is
+      # release (KEYSTORE_FILE set); PRs and unsigned builds skip it. The v1.0.0 release is
       # created once and the asset is clobbered on subsequent pushes, so the "latest" APK is
       # always the most recent green build.
       - name: Publish signed APK to GitHub Release
@@ -196,16 +196,16 @@ jobs:
         run: |
           set -euo pipefail
           APK="$(ls app/build/outputs/apk/release/*.apk | head -1)"
-          ASSET="LeafGuard-v0.4.0-release.apk"
+          ASSET="LeafGuard-v1.0.0-release.apk"
           cp "$APK" "$ASSET"
-          TAG="v0.4.0"
+          TAG="v1.0.0"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber
             echo "Updated existing release $TAG asset."
           else
             gh release create "$TAG" "$ASSET" \
-              --title "LeafGuard v0.4.0 — Swin-Tiny signed release" \
-              --notes "Signed release APK with the trained Swin-Tiny model (98.59% PlantVillage accuracy, 38 classes, 112 MB). Signed with v1 + v2 + v3 schemes — installs on all Android 8.0+ (minSdk 26) devices. Download the .apk and tap to install (no extraction needed)." \
+              --title "LeafGuard v1.0.0 — production release (all 8 phases)" \
+              --notes "Signed production release APK (v1.0.0, all 8 phases complete). Trained Swin-Tiny model (98.59% PlantVillage accuracy, 38 classes) with occlusion-sensitivity XAI, on-device Room persistence, Dashboard/History/Records/Images, and a per-disease treatment-suggestions engine (severity tiers + staged treatments + prevention). Signed v1 + v2 + v3 — installs on all Android 8.0+ (minSdk 26) devices. Download the .apk and tap to install (no extraction needed)." \
               --target main
             echo "Created release $TAG."
           fi

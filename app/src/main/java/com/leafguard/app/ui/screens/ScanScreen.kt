@@ -133,7 +133,7 @@ fun ScanScreen(
                 when {
                     bmp != null -> Image(
                         bitmap = bmp.asImageBitmap(),
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.scan_captured_desc),
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.sizeIn(maxHeight = 320.dp).fillMaxWidth(),
                     )

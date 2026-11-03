@@ -57,9 +57,7 @@ object PdfExporter {
                     canvas = page.canvas
                     y = MARGIN + LINE_H
                 }
-                val line = "${DATE_FMT.format(Date(scan.createdAt))}  ${displayName(scan, plantNames)}  " +
-                    "${scan.labelCondition}  ${(scan.confidence * 100).toInt()}%"
-                canvas.drawText(line, MARGIN, y, body)
+                canvas.drawText(formatRecordLine(scan, plantNames), MARGIN, y, body)
                 y += LINE_H
             }
             doc.finishPage(page)
@@ -72,6 +70,11 @@ object PdfExporter {
         }
     }
 
-    private fun displayName(scan: ScanEntity, plantNames: Map<Long, String>): String =
+    /** The formatted single-line record for a scan (date, plant, condition, confidence %). */
+    internal fun formatRecordLine(scan: ScanEntity, plantNames: Map<Long, String>): String =
+        "${DATE_FMT.format(Date(scan.createdAt))}  ${displayName(scan, plantNames)}  " +
+            "${scan.labelCondition}  ${(scan.confidence * 100).toInt()}%"
+
+    internal fun displayName(scan: ScanEntity, plantNames: Map<Long, String>): String =
         scan.plantId?.let { plantNames[it] } ?: "Unattached"
 }
