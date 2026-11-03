@@ -1,8 +1,11 @@
 package com.leafguard.app.di
 
+import com.leafguard.app.data.local.PlantDao
 import com.leafguard.app.data.repository.AuthRepositoryImpl
+import com.leafguard.app.data.repository.PlantRepositoryImpl
 import com.leafguard.app.data.security.PinStore
 import com.leafguard.app.domain.repository.AuthRepository
+import com.leafguard.app.domain.repository.PlantRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,6 +29,13 @@ object RepositoryModule {
         pinStore: PinStore,
         @IoDispatcher io: CoroutineDispatcher,
     ): AuthRepository = AuthRepositoryImpl(pinStore, io)
+
+    @Provides
+    @Singleton
+    fun providePlantRepository(
+        plantDao: PlantDao,
+        @IoDispatcher io: CoroutineDispatcher,
+    ): PlantRepository = PlantRepositoryImpl(plantDao, io)
 
     @Provides
     @IoDispatcher

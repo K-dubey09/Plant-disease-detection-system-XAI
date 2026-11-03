@@ -55,22 +55,30 @@ This sandbox has no Android SDK, so an automated build is run in CI on push.
 
 ---
 
-## Phase 3 — Room persistence & Plants CRUD 🔜
+## Phase 3 — Room persistence & Plants CRUD ✅
 
-**Goal:** the data backbone for plants, scans, history, and records.
+**Goal:** the data backbone for plants (scans/history/records arrive in later phases).
 
 **Deliverables**
-- Entities: `PlantEntity`, `ScanEntity`, `RecordEntity`, image references.
-- `LeafGuardDatabase` (versioned migrations from day one), DAOs with Flow return types.
-- `PlantRepository`, `ScanRepository` (single source of truth).
-- Hilt `DatabaseModule` + `RepositoryModule`.
-- `PlantsScreen` + `PlantsViewModel`: list, add/edit plant (name, species, notes, photo).
-- `PlantDetailScreen`: scan timeline (reverse-chronological), notes, metadata, "scan this plant".
-- Instrumented tests: DAO queries against in-memory Room.
+- `Plant` entity + `PlantDao` (Flow return types for observe, suspend for mutations) +
+  `LeafGuardDatabase` (version 1, `exportSchema=false` for now).
+- `PlantRepository`/`PlantRepositoryImpl` (single source of truth; reads on `@IoDispatcher`).
+- Hilt `DatabaseModule` (Singleton DB + DAO) + `PlantRepository` binding in `RepositoryModule`.
+- `PlantsViewModel` + real `PlantsScreen`: live list, add-plant dialog (name/species/notes),
+  per-row delete, empty state.
+- `PlantDetailViewModel` + real `PlantDetailScreen`: view metadata, edit name/species/notes,
+  "Scan this plant", delete-with-confirm.
+- Tests: `PlantRepositoryImplTest` (fake DAO, 7), `PlantsViewModelTest` (fake repo, 5),
+  instrumented `PlantDaoTest` (in-memory Room) on a device. **50 JVM unit tests pass locally
+  (38 from Phase 2 + 12 new).**
+
+**Validation:** `./gradlew :app:assembleDebug` compiles cleanly (KSP/Room codegen OK); the APK
+is built by CI (the 4 GB sandbox OOMs at the D8 dex step). `./gradlew :app:testDebugUnitTest`
+runs 50 tests with 0 failures locally.
 
 ---
 
-## Phase 4 — TFLite model + Explainable AI engine ⏳
+## Phase 4 — TFLite model + Explainable AI engine 🔜
 
 **Goal:** on-device inference and Grad-CAM explanation, verified on real leaf inputs.
 

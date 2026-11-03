@@ -33,8 +33,30 @@
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_delete">Delete</string>
+    <string name="action_add">Add</string>
+    <string name="action_edit">Edit</string>
     <string name="coming_soon">This screen ships in a later phase.</string>
     <string name="placeholder_phase">%1$s is implemented in Phase %2$d.</string>
+
+    <!-- Plants (Phase 3) -->
+    <string name="plants_add">Add plant</string>
+    <string name="plants_add_title">Add a plant</string>
+    <string name="plants_empty_title">No plants yet</string>
+    <string name="plants_empty_body">Tap "Add plant" to register your first plant and start tracking its health.</string>
+    <string name="plants_field_name">Name</string>
+    <string name="plants_field_species">Species / cultivar (optional)</string>
+    <string name="plants_field_notes">Notes</string>
+    <string name="plants_added_on">Added %1$s</string>
+    <string name="plants_delete">Delete</string>
+    <string name="plants_error_name_blank">Please enter a name.</string>
+    <string name="plant_detail_title">Plant</string>
+    <string name="plant_detail_added">Added</string>
+    <string name="plant_detail_unspecified">Unspecified</string>
+    <string name="plant_detail_no_notes">No notes yet.</string>
+    <string name="plant_detail_scan">Scan this plant</string>
+    <string name="plant_detail_not_found">Plant not found. It may have been deleted.</string>
+    <string name="plant_detail_delete_title">Delete plant?</string>
+    <string name="plant_detail_delete_body">This permanently removes "%1$s" and cannot be undone.</string>
 
     <!-- Scan -->
     <string name="scan_title">Scan a leaf</string>

@@ -1,6 +1,5 @@
 package com.leafguard.app.ui.navigation
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
@@ -16,13 +15,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -51,8 +50,15 @@ private fun TopDestination.icon(): ImageVector = when (this) {
 
 private val bottomRoutes = TopDestination.entries.map { it.route }.toSet()
 
-/** Routes that belong to the auth flow; the gating effect only force-navigates while on one of these. */
-private val authRoutes = setOf(Routes.AUTH_ROOT, Routes.REGISTER, Routes.LOGIN)
+/** Auth flow routes; the transition effect only force-navigates while the user is on one of these. */
+private val authRoutes = setOf(Routes.REGISTER, Routes.LOGIN)
+
+/** Map an auth state to the route the user should be on. */
+private fun routeFor(state: AuthState): String = when (state) {
+    AuthState.Unregistered -> Routes.REGISTER
+    is AuthState.Locked -> Routes.LOGIN
+    is AuthState.Unlocked -> Routes.DASHBOARD
+}
 
 @Composable
 fun LeafGuardNavHost(
@@ -65,19 +71,21 @@ fun LeafGuardNavHost(
 
     val authState by authViewModel.authState.collectAsStateWithLifecycle()
 
-    // Centralized auth gating: whenever the auth state changes AND the user is still on an auth
-    // route, navigate to the destination that matches the state. Once the user is inside the
-    // main app this effect is a no-op, so in-app navigation is never hijacked.
+    // Pick the start destination synchronously from the initial auth state. Reading the
+    // StateFlow.value here (rather than routing through an empty launcher composable) avoids the
+    // first-frame race where currentBackStackEntry is null and a launcher effect would not fire —
+    // the bug that left the app on a blank screen at launch.
+    val startDestination = remember { routeFor(authViewModel.authState.value) }
+
+    // Auth-state transitions: register success -> dashboard, reset -> register, etc. Only acts
+    // while the user is on an auth route, so in-app navigation is never hijacked.
     LaunchedEffect(authState) {
-        if (currentRoute in authRoutes) {
-            val target = when (authState) {
-                AuthState.Unregistered -> Routes.REGISTER
-                is AuthState.Locked -> Routes.LOGIN
-                is AuthState.Unlocked -> Routes.DASHBOARD
-            }
-            if (currentRoute != target) {
+        val current = navController.currentDestination?.route
+        if (current in authRoutes) {
+            val target = routeFor(authState)
+            if (current != target) {
                 navController.navigate(target) {
-                    popUpTo(Routes.AUTH_ROOT) { inclusive = true }
+                    popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
                     launchSingleTop = true
                 }
             }
@@ -110,12 +118,9 @@ fun LeafGuardNavHost(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.AUTH_ROOT,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding),
         ) {
-            // Launcher: empty until the gating effect routes to register/login/dashboard.
-            composable(Routes.AUTH_ROOT) { Box(Modifier) }
-
             // --- Auth ---
             composable(Routes.REGISTER) {
                 AuthScreen(mode = AuthScreen.Mode.REGISTER, viewModel = authViewModel)
@@ -152,6 +157,7 @@ fun LeafGuardNavHost(
                 PlantDetailScreen(
                     plantId = entry.arguments?.getLong("plantId") ?: -1L,
                     onScanForPlant = { id -> navController.navigate(Routes.scanForPlant(id)) },
+                    onBack = { navController.popBackStack() },
                 )
             }
             composable(
@@ -163,3 +169,4 @@ fun LeafGuardNavHost(
         }
     }
 }
+

@@ -5,8 +5,9 @@ with a TensorFlow Lite model and explains every prediction with a **Grad-CAM** s
 The user registers once with a 6-digit PIN, then tracks individual plants, scans leaves in real
 time, and builds a per-plant disease history with actionable treatment suggestions.
 
-> Status: **Phase 2 of 8 — PIN authentication & session gating.** Phase 1's navigation skeleton
-> now gates behind a Keystore-backed PIN register/login flow; 38 JVM unit tests pass.
+> Status: **Phase 3 of 8 — Room persistence & Plants CRUD.** A Keystore-backed PIN gates the app;
+> plants now persist in a Room database with a real list/add/edit/delete UI. 50 JVM unit tests
+> pass. The launch-time white screen from Phase 2 (auth-root launcher race) is fixed.
 > See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the full phased plan and the PDF
 > `LeafGuard_Project_Plan.pdf` (in the repo root after Phase 1) for the design rationale.
 
