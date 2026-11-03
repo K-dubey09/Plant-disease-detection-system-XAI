@@ -30,11 +30,11 @@
 | --- | --- | --- | --- |
 | `LeafGuardNavHost` | UI | 1 | Single NavHost; gates auth ↔ main app |
 | `AuthViewModel` / `PinStore` | UI / Data | 2 | Register, PIN login, Keystore-backed storage |
-| `LeafGuardDatabase`, entities, DAOs | Data | 3 | Plants, Scans, Records persistence |
-| `PlantRepository`, `ScanRepository` | Data | 3 | Single source of truth, Flow-based |
+| `LeafGuardDatabase` (Plant), `PlantDao`, `PlantRepository` | Data | 3 | Plants CRUD; single source of truth, Flow-based |
+| `ScanEntity`, `ScanDao`, `ScanRepository` | Data | 5 | Persisted scans; nullable plant FK (ON DELETE SET NULL); v1→v2 migration |
 | `DiseaseClassifier` | Data | 4 | Load Swin-Tiny model, preprocess 224×224, run inference (softmax baked in) |
 | `SaliencyGenerator` | Data | 4 | Occlusion-sensitivity heatmap (model-agnostic; TFLite exposes no conv gradients) |
-| `ScanViewModel` + CameraX | UI | 5 | Live preview, capture, wire to inference → result |
+| `ScanViewModel` + CameraX (`PreviewView`/`ImageCapture`) | UI | 5 | Live capture → classify → saliency → persist `ScanEntity` → navigate `result/{scanId}` |
 | `SuggestionsEngine` | Domain | 7 | Map 38 classes → treatment steps + severity |
 
 ## Navigation graph

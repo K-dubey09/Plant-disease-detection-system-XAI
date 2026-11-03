@@ -18,19 +18,22 @@ object Routes {
     // --- Main app (bottom-nav destinations) ---
     const val DASHBOARD = "dashboard"
     const val PLANTS = "plants"
-    const val SCAN = "scan"                 // optional ?plantId=
+    const val SCAN = "scan"                 // bottom-nav Scan tab (no plant attached)
+    const val SCAN_FOR_PLANT = "scan-plant/{plantId}"   // launched from PlantDetail
+    const val SCAN_FOR_PLANT_ARG = "plantId"
     const val HISTORY = "history"
     const val RECORDS = "records"
 
     // --- Secondary destinations ---
     const val IMAGES = "images"
     const val PLANT_DETAIL = "plant/{plantId}"
-    const val RESULT = "result"   // no arg: the result screen reads the latest scan from ScanResultHolder
+    const val RESULT = "result/{scanId}"   // Phase 5: each scan is addressable by its persisted id
+    const val RESULT_ARG_SCAN_ID = "scanId"
 
     fun plantDetail(plantId: Long): String = "plant/$plantId"
-    fun result(): String = RESULT
+    fun result(scanId: Long): String = "result/$scanId"
     fun scanForPlant(plantId: Long?): String =
-        if (plantId == null) SCAN else "$SCAN?plantId=$plantId"
+        if (plantId == null) SCAN else "scan-plant/$plantId"
 }
 
 /**

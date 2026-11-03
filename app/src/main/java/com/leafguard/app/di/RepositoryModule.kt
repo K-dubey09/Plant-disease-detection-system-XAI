@@ -1,11 +1,14 @@
 package com.leafguard.app.di
 
 import com.leafguard.app.data.local.PlantDao
+import com.leafguard.app.data.local.ScanDao
 import com.leafguard.app.data.repository.AuthRepositoryImpl
 import com.leafguard.app.data.repository.PlantRepositoryImpl
+import com.leafguard.app.data.repository.ScanRepositoryImpl
 import com.leafguard.app.data.security.PinStore
 import com.leafguard.app.domain.repository.AuthRepository
 import com.leafguard.app.domain.repository.PlantRepository
+import com.leafguard.app.domain.repository.ScanRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,6 +39,13 @@ object RepositoryModule {
         plantDao: PlantDao,
         @IoDispatcher io: CoroutineDispatcher,
     ): PlantRepository = PlantRepositoryImpl(plantDao, io)
+
+    @Provides
+    @Singleton
+    fun provideScanRepository(
+        scanDao: ScanDao,
+        @IoDispatcher io: CoroutineDispatcher,
+    ): ScanRepository = ScanRepositoryImpl(scanDao, io)
 
     @Provides
     @IoDispatcher

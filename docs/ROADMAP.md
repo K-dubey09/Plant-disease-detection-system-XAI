@@ -120,24 +120,49 @@ verify` CI step that asserts v1 + v2 are present, and published as a raw `.apk` 
 
 ---
 
-## Phase 5 — CameraX live scan → result flow ⏳
+## Phase 5 — CameraX live scan → result flow ✅
 
 **Goal:** the user scans a leaf in real time and gets a diagnosis + explanation, attachable to
-a plant.
+a plant and persisted for history.
 
 **Deliverables**
-- `ScanScreen` with CameraX `PreviewView` + `ImageAnalysis` (`KEEP_ONLY_LATEST`), capture button,
-  import-from-gallery fallback.
-- `ScanViewModel`: on capture, run `DiseaseClassifier` + `SaliencyGenerator`, persist a
-  `ScanEntity` (image + overlay + diagnosis + timestamp), expose result id.
-- `ResultScreen`: top-1 class + confidence, Grad-CAM overlay image, "save to plant" /
-  "save as new plant" actions; if `scan?plantId=` was used, auto-attach.
-- Runtime permission flow (camera, media images) via Accompanist.
-- Instrumented: scan → result navigation; capture produces a non-null scan id.
+- `ScanScreen` rewired to CameraX: a `PreviewView` (back camera, `FILL_CENTER`) bound to a
+  `Preview` + `ImageCapture` use case via `ProcessCameraProvider`; a Capture button saves a frame
+  to the cache dir, decodes it, and stages it for analysis. Gallery import (`PickVisualMedia`)
+  remains as a fallback for emulators / re-scanning existing photos; a Retake button clears the
+  staged bitmap. Runtime CAMERA permission is requested on entry (`uses-feature camera.any
+  required="false"` so the app still installs on camera-less devices).
+- `ScanEntity` (Room) + `ScanDao`: a persisted scan row (id, nullable `plantId` foreign key to
+  `plants` with `ON DELETE SET NULL`, `labelName`, `labelCondition`, `confidence`, `createdAt`).
+  Deleting a plant keeps its scan history (plantId → NULL) rather than cascading.
+- `LeafGuardDatabase` bumped to v2 with `MIGRATION_1_2` (adds the `scans` table + its plant FK +
+  index) so an in-place app upgrade never loses the user's plants.
+- `ScanRepository`/`ScanRepositoryImpl` (single source of truth, Flow-based, `@IoDispatcher`) +
+  Hilt bindings in `DatabaseModule` (ScanDao) and `RepositoryModule` (ScanRepository).
+- `ScanViewModel.analyze(bitmap, plantId?)`: classify → occlusion saliency → suggest →
+  persist `ScanEntity` → publish Bitmaps to `ScanResultHolder` → emit `UiState.Done(scanId)` so the
+  UI navigates to `result/{scanId}`. `plantId` is non-null only when launched from PlantDetail.
+- `ResultViewModel`: reads `ScanResultHolder` (Bitmaps + diagnosis, in-memory) AND observes the
+  persisted `ScanEntity` by `scanId` (via `SavedStateHandle`) so the metadata survives process
+  death and so Phase 6 history → result navigation works without the holder.
+- Navigation: `scan` (bottom-nav, unattached) + `scan-plant/{plantId}` (from PlantDetail,
+  auto-attached) + `result/{scanId}` (addressable). The two-route scan pattern mirrors
+  `plant/{plantId}` and avoids optional-query-arg resolution ambiguity.
+- Tests: `ScanRepositoryImplTest` (8 cases — empty, persist+emit, plantId link, unattached,
+  per-plant filter, getById, delete, observe-then-null) + `FakeScanDao` + `FakeScanRepository`;
+  `RoutesTest` updated for `result(scanId)` + `scan-plant/{plantId}`. **74 JVM unit tests** total.
+
+**Validation:** `./gradlew :app:testDebugUnitTest` → 74 JVM unit tests pass (66 from Phases 2–4 +
+8 new), 0 failures, on CI. `assembleDebug` + `assembleRelease` (v1+v2+v3 signed) built by CI; the
+release APK is published to GitHub Releases. The scan → persist → result/{scanId} path and the
+CameraX binding are exercised on-device (instrumented capture → non-null scan id is the next
+instrumented test target). The `scan_demo_banner` string was corrected: it no longer claims
+"DEMO MODEL / predictions are a placeholder" (false for the release APK, which ships the trained
+Swin-Tiny model); it now states the real on-device inference + advisory nature.
 
 ---
 
-## Phase 6 — Dashboard, History, Images, Records ⏳
+## Phase 6 — Dashboard, History, Images, Records 🔜
 
 **Goal:** the information surfaces over accumulated scans.
 

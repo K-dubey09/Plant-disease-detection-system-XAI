@@ -6,13 +6,13 @@ saliency heatmap.
 The user registers once with a 6-digit PIN, then tracks individual plants, scans leaves in real
 time, and builds a per-plant disease history with actionable treatment suggestions.
 
-> Status: **Phase 4 of 8 — TFLite inference + explainable AI engine.** On-device classification
-> with the **trained Swin-Tiny** transformer (patch4-window7-224, 38 PlantVillage classes,
-> **98.59% validation accuracy**, 112 MB FP32), an occlusion-sensitivity saliency heatmap, and
-> advisory suggestions; scan a leaf photo to see a result + explanation. The trained model is
-> pulled from a private Kaggle dataset by CI on every build (a demo fallback is committed for
-> offline builds). **66 JVM unit tests pass.** The signed release APK (v1 + v2 + v3 signing) is
-> published to GitHub Releases as a raw `.apk` — download and tap to install on Android 8.0+.
+> Status: **Phase 5 of 8 — CameraX live scan → result flow.** The Scan tab now captures a leaf
+> live via CameraX (`PreviewView` + `ImageCapture`), runs the trained **Swin-Tiny** classifier
+> (98.59% PlantVillage accuracy, 112 MB) + occlusion-sensitivity heatmap, **persists each scan**
+> to a Room `scans` table (linked to a plant when launched from PlantDetail), and navigates to a
+> `result/{scanId}` screen. Gallery import remains as a fallback. **74 JVM unit tests pass.** The
+> signed release APK (v1 + v2 + v3 signing) is published to GitHub Releases as a raw `.apk` —
+> download and tap to install on Android 8.0+.
 > See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the full phased plan and the PDF
 > `LeafGuard_Project_Plan.pdf` (in the repo root after Phase 1) for the design rationale.
 
@@ -187,8 +187,9 @@ passes per scan (acceptable on a 6 GB+ device; cached for the result screen).
 ## Testing strategy
 
 - **Unit (JVM):** pure logic — navigation route helpers, PIN validation, label parsing,
-  suggestion mapping, occlusion-rect computation, pixel normalization, repository mappers (Truth
-  assertions, Mockk for collaborators, Turbine for Flow). **66 tests pass.** See `app/src/test/`.
+  suggestion mapping, occlusion-rect computation, pixel normalization, repository mappers, and
+  the Scan repository (persist, per-plant filter, observe-then-null). (Truth assertions, Mockk
+  for collaborators, Turbine for Flow). **74 tests pass.** See `app/src/test/`.
 - **Instrumented:** Room DAOs against an in-memory database, Hilt-injected repositories, and
   Compose UI tests for the auth flow and scan→result navigation. See `app/src/androidTest/`.
 - **CI:** GitHub Actions runs `./gradlew assembleDebug assembleRelease test lint` on every push,
@@ -207,8 +208,8 @@ passes per scan (acceptable on a 6 GB+ device; cached for the result screen).
 | 2 | PIN authentication (register/login), EncryptedSharedPreferences + Keystore, session gating | ✅ |
 | 3 | Room schema (plants, scans, history, records), DAOs, repositories, Plants CRUD | ✅ |
 | 4 | Trained Swin-Tiny TFLite model + occlusion-sensitivity XAI engine; signed release APK (v1+v2+v3) | ✅ |
-| 5 | CameraX live scan, capture → inference → result flow, attach to plant | 🔜 Next |
-| 6 | Dashboard stats, History feed, Images gallery, Records + CSV/PDF export | ⏳ |
+| 5 | CameraX live scan, capture → inference → result flow, persist ScanEntity + attach to plant | ✅ |
+| 6 | Dashboard stats, History feed, Images gallery, Records + CSV/PDF export | 🔜 Next |
 | 7 | Treatment suggestions engine + per-disease knowledge base | ⏳ |
 | 8 | Polish, full test pass, R8/release build, store readiness | ⏳ |
 

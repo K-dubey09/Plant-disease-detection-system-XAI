@@ -16,9 +16,9 @@ class RoutesTest {
     }
 
     @Test
-    fun result_isNoArgRoute() {
-        // The result screen reads the latest scan from ScanResultHolder, so it takes no nav arg.
-        assertThat(Routes.result()).isEqualTo("result")
+    fun result_includesScanId() {
+        // Phase 5: the result screen is addressable by the persisted scan id (result/{scanId}).
+        assertThat(Routes.result(7L)).isEqualTo("result/7")
     }
 
     @Test
@@ -27,8 +27,8 @@ class RoutesTest {
     }
 
     @Test
-    fun scanForPlant_withId_appendsQuery() {
-        assertThat(Routes.scanForPlant(9L)).isEqualTo("scan?plantId=9")
+    fun scanForPlant_withId_usesPlantRoute() {
+        assertThat(Routes.scanForPlant(9L)).isEqualTo("scan-plant/9")
     }
 
     @Test
