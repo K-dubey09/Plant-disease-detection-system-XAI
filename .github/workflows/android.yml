@@ -25,7 +25,10 @@ jobs:
       # `${{ secrets.X }}` (which would risk logging the secret). Empty when the secret is unset
       # (e.g. a fork PR), so the corresponding step is skipped gracefully.
       KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
-      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      # Accept the token under either name: the canonical KAGGLE_API_TOKEN, or a
+      # fallback to KAGGLE_KEY (some setups store the KGAT_ token there). The kaggle
+      # CLI authenticates from the KAGGLE_API_TOKEN env var regardless of source.
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN || secrets.KAGGLE_KEY }}
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
