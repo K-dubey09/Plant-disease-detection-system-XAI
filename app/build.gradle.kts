@@ -190,6 +190,7 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.google.truth)
+    testImplementation(libs.org.json)
     testImplementation(libs.androidx.arch.core.testing)
     testImplementation(libs.androidx.room.testing)
     testImplementation(libs.hilt.android.testing)

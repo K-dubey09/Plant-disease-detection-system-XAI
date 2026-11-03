@@ -29,6 +29,7 @@ turbine = "1.1.0"
 robolectric = "4.13"
 coroutinesTest = "1.9.0"
 truth = "1.4.4"
+orgJson = "20240303"
 
 [libraries]
 # AndroidX core
@@ -99,6 +100,7 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 google-truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
+org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
 
 [plugins]

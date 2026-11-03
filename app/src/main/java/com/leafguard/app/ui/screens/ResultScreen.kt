@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Refresh
@@ -21,6 +22,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,6 +38,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafguard.app.R
 import com.leafguard.app.data.inference.ScanResult
+import com.leafguard.app.domain.model.Severity
 import com.leafguard.app.ui.components.LeafScaffold
 import com.leafguard.app.ui.scan.ResultViewModel
 
@@ -136,18 +139,35 @@ private fun ResultContent(
         // Advisory.
         val suggestion = result.suggestion
         if (suggestion != null) {
+            SeverityBadge(suggestion.severity)
             Text(stringResource(R.string.result_summary), style = MaterialTheme.typography.titleMedium)
             Text(suggestion.summary, style = MaterialTheme.typography.bodyMedium)
-            if (suggestion.treatments.isNotEmpty()) {
-                Spacer(Modifier.height(4.dp))
-                Text(stringResource(R.string.result_treatments), fontWeight = FontWeight.SemiBold)
-                suggestion.treatments.forEach {
-                    Text("• $it", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp))
+            if (suggestion.severity == Severity.HEALTHY) {
+                Text(
+                    text = stringResource(R.string.result_healthy_note),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                suggestion.treatmentStages.forEach { stage ->
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.result_stage_label, stage.stage),
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    stage.steps.forEach { step ->
+                        Text("• $step", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp))
+                    }
                 }
             }
             if (suggestion.prevention.isNotEmpty()) {
                 Spacer(Modifier.height(4.dp))
-                Text(stringResource(R.string.result_prevention), fontWeight = FontWeight.SemiBold)
+                Text(
+                    stringResource(R.string.result_prevention),
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleSmall,
+                )
                 suggestion.prevention.forEach {
                     Text("• $it", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp))
                 }
@@ -195,6 +215,43 @@ private fun NoScanState(modifier: Modifier) {
             textAlign = TextAlign.Center,
         )
     }
+}
+
+@Composable
+private fun SeverityBadge(severity: Severity) {
+    val scheme = MaterialTheme.colorScheme
+    val containerColor = when (severity) {
+        Severity.HEALTHY -> scheme.tertiaryContainer
+        Severity.LOW -> scheme.primaryContainer
+        Severity.MEDIUM -> scheme.secondaryContainer
+        Severity.HIGH -> scheme.errorContainer
+        Severity.CRITICAL -> scheme.error
+    }
+    val contentColor = when (severity) {
+        Severity.CRITICAL -> scheme.onError
+        else -> scheme.onSurfaceVariant
+    }
+    val tier = stringResource(severityLabelRes(severity))
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = containerColor,
+        contentColor = contentColor,
+    ) {
+        Text(
+            text = stringResource(R.string.result_severity_label, tier),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+        )
+    }
+}
+
+private fun severityLabelRes(severity: Severity): Int = when (severity) {
+    Severity.HEALTHY -> R.string.severity_healthy
+    Severity.LOW -> R.string.severity_low
+    Severity.MEDIUM -> R.string.severity_medium
+    Severity.HIGH -> R.string.severity_high
+    Severity.CRITICAL -> R.string.severity_critical
 }
 
 private fun percent(f: Float): String = "${(f.coerceIn(0f, 1f) * 100).toInt()}%"

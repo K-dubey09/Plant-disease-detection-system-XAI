@@ -1,466 +1,1016 @@
 {
   "Apple___Apple_scab": {
+    "condition": "Apple scab (Venturia inaequalis)",
     "label": "Apple___Apple_scab",
     "plant": "Apple",
-    "condition": "Apple scab (Venturia inaequalis)",
-    "summary": "A fungal disease causing dark scabby lesions on leaves and fruit.",
-    "treatments": [
-      "Apply a protectant fungicide (e.g. captan or sulfur) from green tip through first cover.",
-      "Rake and destroy fallen leaves to reduce overwintering inoculum."
-    ],
     "prevention": [
       "Choose scab-resistant cultivars.",
       "Prune for airflow; avoid wetting foliage when irrigating."
+    ],
+    "severity": "HIGH",
+    "summary": "A fungal disease causing dark scabby lesions on leaves and fruit.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Apply a protectant fungicide (captan or sulfur) from green tip through first cover; remove visibly infected leaves and fruit.",
+          "Bag and destroy infected fruit - do not compost."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat fungicide every 7-10 days through primary scab season (petal fall to first cover).",
+          "Rake and destroy fallen leaves to cut overwintering inoculum."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant scab-resistant cultivars (e.g. Liberty, Enterprise).",
+          "Prune for airflow; shred leaf litter in autumn to speed decomposition."
+        ]
+      }
     ]
   },
   "Apple___Black_rot": {
+    "condition": "Black rot (Botryosphaeria obtusa)",
     "label": "Apple___Black_rot",
     "plant": "Apple",
-    "condition": "Black rot (Botryosphaeria obtusa)",
-    "summary": "Fungal disease causing frog-eye leaf spots, black fruit rot, and cane cankers.",
-    "treatments": [
-      "Apply captan or thiophanate-methyl during bloom and cover sprays.",
-      "Remove mummified fruit and cankered wood."
-    ],
     "prevention": [
       "Prune out dead/diseased wood.",
       "Maintain a balanced nutrition program."
+    ],
+    "severity": "MEDIUM",
+    "summary": "Fungal disease causing frog-eye leaf spots, black fruit rot, and cane cankers.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Prune out cankers and mummified fruit; remove infected wood.",
+          "Apply captan or thiophanate-methyl from bloom through first cover."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat protectant sprays through first cover; destroy fallen mummies.",
+          "Maintain tree vigor with balanced nutrition."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Remove mummified fruit and cankered wood each dormant season.",
+          "Open the canopy with annual pruning."
+        ]
+      }
     ]
   },
   "Apple___Cedar_apple_rust": {
+    "condition": "Cedar-apple rust (Gymnosporangium juniperi-virginianae)",
     "label": "Apple___Cedar_apple_rust",
     "plant": "Apple",
-    "condition": "Cedar-apple rust (Gymnosporangium juniperi-virginianae)",
-    "summary": "Fungal disease needing both apple and cedar hosts; bright orange leaf spots.",
-    "treatments": [
-      "Apply myclobutanil or ferbam from pink bud through petal fall.",
-      "Remove nearby juniper/cedar galls where feasible."
-    ],
     "prevention": [
       "Plant rust-resistant apple cultivars.",
       "Avoid planting apples near eastern red cedar."
+    ],
+    "severity": "MEDIUM",
+    "summary": "Fungal disease needing both apple and cedar hosts; bright orange leaf spots.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Apply myclobutanil or sulfur from pink bud through petal fall.",
+          "Remove nearby juniper galls where practical."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat sprays through petal fall; monitor both apple and juniper hosts.",
+          "Do not spray during full bloom (protect pollinators)."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant rust-resistant apple cultivars.",
+          "Remove eastern red cedar hosts within 1/4 mile where feasible."
+        ]
+      }
     ]
   },
   "Apple___healthy": {
+    "condition": "Healthy",
     "label": "Apple___healthy",
     "plant": "Apple",
-    "condition": "Healthy",
-    "summary": "No disease symptoms detected on this leaf.",
-    "treatments": [],
     "prevention": [
       "Continue routine monitoring and balanced care."
-    ]
+    ],
+    "severity": "HEALTHY",
+    "summary": "No disease symptoms detected on this leaf.",
+    "treatmentStages": []
   },
   "Blueberry___healthy": {
+    "condition": "Healthy",
     "label": "Blueberry___healthy",
     "plant": "Blueberry",
-    "condition": "Healthy",
-    "summary": "No disease symptoms detected on this leaf.",
-    "treatments": [],
     "prevention": [
       "Maintain acidic soil (pH 4.5-5.5) and mulch."
-    ]
+    ],
+    "severity": "HEALTHY",
+    "summary": "No disease symptoms detected on this leaf.",
+    "treatmentStages": []
   },
   "Cherry___Powdery_mildew": {
+    "condition": "Powdery mildew (Podosphaera spp.)",
     "label": "Cherry___Powdery_mildew",
     "plant": "Cherry",
-    "condition": "Powdery mildew (Podosphaera spp.)",
-    "summary": "Fungal disease forming white powdery growth on leaves and shoots.",
-    "treatments": [
-      "Apply sulfur or a powdery-mildew-specific fungicide at early symptom onset."
-    ],
     "prevention": [
       "Prune for airflow; avoid excess nitrogen.",
       "Space plants to reduce humidity."
+    ],
+    "severity": "MEDIUM",
+    "summary": "Fungal disease forming white powdery growth on leaves and shoots.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Apply sulfur or horticultural oil at first sign of white colonies.",
+          "Prune out infected young shoots."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat sprays per label (7-14 days); thin the canopy for airflow.",
+          "Avoid excess nitrogen, which drives susceptible new growth."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant resistant cherry cultivars.",
+          "Space trees for airflow; prune annually."
+        ]
+      }
     ]
   },
   "Cherry___healthy": {
+    "condition": "Healthy",
     "label": "Cherry___healthy",
     "plant": "Cherry",
-    "condition": "Healthy",
-    "summary": "No disease symptoms detected on this leaf.",
-    "treatments": [],
     "prevention": [
       "Continue routine monitoring and balanced care."
-    ]
+    ],
+    "severity": "HEALTHY",
+    "summary": "No disease symptoms detected on this leaf.",
+    "treatmentStages": []
   },
   "Corn___Cercospora_gray_leaf_spot": {
+    "condition": "Gray leaf spot (Cercospora zeae-maydis)",
     "label": "Corn___Cercospora_gray_leaf_spot",
     "plant": "Corn",
-    "condition": "Gray leaf spot (Cercospora zeae-maydis)",
-    "summary": "Fungal disease producing rectangular gray-tan lesions bounded by leaf veins.",
-    "treatments": [
-      "Apply a foliar fungicide (e.g. azoxystrobin or pyraclostrobin) if infection is active before tasseling."
-    ],
     "prevention": [
       "Rotate crops and incorporate residue.",
       "Plant resistant hybrids."
+    ],
+    "severity": "MEDIUM",
+    "summary": "Fungal disease producing rectangular gray-tan lesions bounded by leaf veins.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Apply a strobilurin or triazole fungicide if lesions reach the ear leaf.",
+          "Note the field for rotation next season."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Monitor lesion spread up the canopy; a second fungicide pass may pay under prolonged humid weather.",
+          "Keep the canopy dry where irrigated."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant resistant hybrids; rotate to a non-host crop.",
+          "Bury infected residue with tillage where practical."
+        ]
+      }
     ]
   },
   "Corn___Common_rust": {
+    "condition": "Common rust (Puccinia sorghi)",
     "label": "Corn___Common_rust",
     "plant": "Corn",
-    "condition": "Common rust (Puccinia sorghi)",
-    "summary": "Fungal disease causing cinnamon-brown pustules on both leaf surfaces.",
-    "treatments": [
-      "Apply a fungicide if rust appears early and on susceptible hybrids."
-    ],
     "prevention": [
       "Plant resistant hybrids.",
       "Monitor during cool humid weather."
+    ],
+    "severity": "MEDIUM",
+    "summary": "Fungal disease causing cinnamon-brown pustules on both leaf surfaces.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Apply a foliar fungicide (strobilurin or triazole) if rust reaches the ear leaf under favorable weather.",
+          "Resistant hybrids usually hold without treatment."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Monitor spread during warm, humid spells.",
+          "Avoid late planting that extends the susceptible window."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant resistant hybrids; rotate crops.",
+          "Manage volunteer corn."
+        ]
+      }
     ]
   },
   "Corn___Northern_Leaf_Blight": {
+    "condition": "Northern leaf blight (Exserohilum turcicum)",
     "label": "Corn___Northern_Leaf_Blight",
     "plant": "Corn",
-    "condition": "Northern leaf blight (Exserohilum turcicum)",
-    "summary": "Fungal disease causing long cigar-shaped gray-green lesions.",
-    "treatments": [
-      "Apply a foliar fungicide at early lesion onset.",
-      "Rotate crops and bury residue."
-    ],
     "prevention": [
       "Plant resistant hybrids.",
       "Reduce continuous corn."
+    ],
+    "severity": "HIGH",
+    "summary": "Fungal disease causing long cigar-shaped gray-green lesions.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Apply a foliar fungicide at first lesions on the ear leaf.",
+          "Destroy or deeply incorporate heavily infected residue."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat the fungicide if humid weather persists; monitor lesion progression up the canopy.",
+          "Avoid overhead irrigation in the evening."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant resistant hybrids with specific gene resistance.",
+          "Rotate crops; bury infected residue."
+        ]
+      }
     ]
   },
   "Corn___healthy": {
+    "condition": "Healthy",
     "label": "Corn___healthy",
     "plant": "Corn",
-    "condition": "Healthy",
-    "summary": "No disease symptoms detected on this leaf.",
-    "treatments": [],
     "prevention": [
       "Continue routine monitoring and balanced care."
-    ]
+    ],
+    "severity": "HEALTHY",
+    "summary": "No disease symptoms detected on this leaf.",
+    "treatmentStages": []
   },
   "Grape___Black_rot": {
+    "condition": "Black rot (Guignardia bidwelli)",
     "label": "Grape___Black_rot",
     "plant": "Grape",
-    "condition": "Black rot (Guignardia bidwelli)",
-    "summary": "Fungal disease causing leaf lesions with black fruiting bodies and berry mummification.",
-    "treatments": [
-      "Apply captan, mancozeb, or myclobutanil from bud break through berry touch."
-    ],
     "prevention": [
       "Remove mummified berries and prune for airflow."
+    ],
+    "severity": "HIGH",
+    "summary": "Fungal disease causing leaf lesions with black fruiting bodies and berry mummification.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Remove and destroy mummified berries and infected canes.",
+          "Apply captan or mancozeb from early bloom."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat protectant sprays every 7-14 days through fruit set.",
+          "Keep the canopy open with shoot positioning."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Prune out all mummies each dormant season.",
+          "Manage canopy for airflow; destroy fallen debris."
+        ]
+      }
     ]
   },
   "Grape___Esca_(Black_Measles)": {
+    "condition": "Esca / Black measles (complex of fungi)",
     "label": "Grape___Esca_(Black_Measles)",
     "plant": "Grape",
-    "condition": "Esca / Black measles (complex of fungi)",
-    "summary": "Chronic/vascular disease causing tiger-stripe leaves and dark-pitted berries.",
-    "treatments": [
-      "No reliable cure; protect pruning wounds with a wound-protectant fungicide."
-    ],
     "prevention": [
       "Remove severely affected vines.",
       "Avoid large pruning cuts in wet weather."
+    ],
+    "severity": "HIGH",
+    "summary": "Chronic/vascular disease causing tiger-stripe leaves and dark-pitted berries.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "No curative treatment - protect large pruning wounds with a wound-protectant paint.",
+          "Mark affected vines for tracking."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Avoid large pruning cuts late in the season; manage water stress.",
+          "Map affected vines and assess canopy/fruit decline."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Remove chronically infected vines; re-graft or replant with clean, certified stock.",
+          "Source vines from a certified, virus-free nursery."
+        ]
+      }
     ]
   },
   "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)": {
+    "condition": "Leaf blight / Isariopsis leaf spot",
     "label": "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)",
     "plant": "Grape",
-    "condition": "Leaf blight / Isariopsis leaf spot",
-    "summary": "Fungal disease causing angular necrotic leaf spots with dark spore masses.",
-    "treatments": [
-      "Apply mancozeb, captan, or myclobutanil at bloom and pre-bunch closing."
-    ],
     "prevention": [
       "Remove infected leaves and maintain canopy airflow."
+    ],
+    "severity": "MEDIUM",
+    "summary": "Fungal disease causing angular necrotic leaf spots with dark spore masses.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Apply captan, mancozeb, or a strobilurin at bloom; remove infected leaves.",
+          "Open the canopy with leaf pulling around the cluster."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat protectant sprays every 10-14 days.",
+          "Keep the fruit zone open for airflow."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Prune for airflow; destroy fallen leaves at season end.",
+          "Manage canopy each season."
+        ]
+      }
     ]
   },
   "Grape___healthy": {
+    "condition": "Healthy",
     "label": "Grape___healthy",
     "plant": "Grape",
-    "condition": "Healthy",
-    "summary": "No disease symptoms detected on this leaf.",
-    "treatments": [],
     "prevention": [
       "Continue routine monitoring and balanced care."
-    ]
+    ],
+    "severity": "HEALTHY",
+    "summary": "No disease symptoms detected on this leaf.",
+    "treatmentStages": []
   },
   "Orange___Haunglongbing_(Citrus_greening)": {
+    "condition": "Huanglongbing / Citrus greening (Candidatus Liberibacter)",
     "label": "Orange___Haunglongbing_(Citrus_greening)",
     "plant": "Orange",
-    "condition": "Huanglongbing / Citrus greening (Candidatus Liberibacter)",
-    "summary": "Bacterial, systemic, insect-vectored disease causing blotchy mottle and bitter fruit.",
-    "treatments": [
-      "No cure: remove confirmed infected trees to slow spread.",
-      "Control the Asian citrus psyllid vector with approved insecticides."
-    ],
     "prevention": [
       "Use certified disease-free nursery stock.",
       "Manage psyllid populations area-wide."
+    ],
+    "severity": "CRITICAL",
+    "summary": "Bacterial, systemic, insect-vectored disease causing blotchy mottle and bitter fruit.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "No cure - report to your local agricultural extension and remove/destroy the infected tree to slow spread.",
+          "Control the Asian citrus psyllid vector with a systemic insecticide per extension guidance."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Continue psyllid sprays on surrounding trees; monitor for symptoms in the rest of the grove.",
+          "Manage nutrition to mask decline (a stopgap, not a cure)."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Replant with disease-free, psyllid-tolerant citrus.",
+          "Remove all infected trees; maintain area-wide psyllid management."
+        ]
+      }
     ]
   },
   "Peach___Bacterial_spot": {
+    "condition": "Bacterial spot (Xanthomonas arboricola pv. pruni)",
     "label": "Peach___Bacterial_spot",
     "plant": "Peach",
-    "condition": "Bacterial spot (Xanthomonas arboricola pv. pruni)",
-    "summary": "Bacterial disease causing angular leaf spots, yellowing, and fruit cracking.",
-    "treatments": [
-      "Apply copper or oxytetracycline at fall leaf drop and/or early bloom (per local regulations)."
-    ],
     "prevention": [
       "Plant resistant cultivars.",
       "Avoid overhead irrigation."
+    ],
+    "severity": "HIGH",
+    "summary": "Bacterial disease causing angular leaf spots, yellowing, and fruit cracking.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Remove infected shoots and fruit; apply a copper bactericide at the delayed-dormant stage.",
+          "Avoid overhead irrigation."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat copper sprays in summer on a 7-14 day schedule while symptoms are active.",
+          "Do not work plants when wet."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant resistant varieties; prune for airflow.",
+          "Destroy mummified fruit; avoid peach following peach."
+        ]
+      }
     ]
   },
   "Peach___healthy": {
+    "condition": "Healthy",
     "label": "Peach___healthy",
     "plant": "Peach",
-    "condition": "Healthy",
-    "summary": "No disease symptoms detected on this leaf.",
-    "treatments": [],
     "prevention": [
       "Continue routine monitoring and balanced care."
-    ]
+    ],
+    "severity": "HEALTHY",
+    "summary": "No disease symptoms detected on this leaf.",
+    "treatmentStages": []
   },
   "Pepper_bell___Bacterial_spot": {
+    "condition": "Bacterial spot (Xanthomonas spp.)",
     "label": "Pepper_bell___Bacterial_spot",
     "plant": "Pepper (bell)",
-    "condition": "Bacterial spot (Xanthomonas spp.)",
-    "summary": "Bacterial disease causing water-soaked leaf spots that turn brown and necrotic.",
-    "treatments": [
-      "Apply copper + mancozeb sprays (resistance is common; rotate products)."
-    ],
     "prevention": [
       "Use disease-free seed and transplants.",
       "Avoid overhead irrigation and working with wet plants."
+    ],
+    "severity": "HIGH",
+    "summary": "Bacterial disease causing water-soaked leaf spots that turn brown and necrotic.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Remove infected leaves and fruit; apply a copper-mancozeb bactericide at first symptoms.",
+          "Limit overhead irrigation."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat sprays every 7-10 days; avoid working wet plants.",
+          "Stake plants to reduce splash."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Rotate to non-host crops for 2+ years; use certified disease-free seed.",
+          "Sanitize tools between plants."
+        ]
+      }
     ]
   },
   "Pepper_bell___healthy": {
+    "condition": "Healthy",
     "label": "Pepper_bell___healthy",
     "plant": "Pepper (bell)",
-    "condition": "Healthy",
-    "summary": "No disease symptoms detected on this leaf.",
-    "treatments": [],
     "prevention": [
       "Continue routine monitoring and balanced care."
-    ]
+    ],
+    "severity": "HEALTHY",
+    "summary": "No disease symptoms detected on this leaf.",
+    "treatmentStages": []
   },
   "Potato___Early_blight": {
+    "condition": "Early blight (Alternaria solani)",
     "label": "Potato___Early_blight",
     "plant": "Potato",
-    "condition": "Early blight (Alternaria solani)",
-    "summary": "Fungal disease causing dark target-ring lesions on lower leaves first.",
-    "treatments": [
-      "Apply chlorothalonil, mancozeb, or azoxystrobin on a 7-10 day schedule."
-    ],
     "prevention": [
       "Rotate crops (2-3 years out of solanaceous crops).",
       "Maintain plant vigor with adequate nitrogen."
+    ],
+    "severity": "HIGH",
+    "summary": "Fungal disease causing dark target-ring lesions on lower leaves first.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Remove infected lower leaves; apply chlorothalonil, mancozeb, or a strobilurin at first lesions.",
+          "Mulch to suppress soil splash."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat protectant sprays every 7-10 days.",
+          "Maintain hillling and weed control."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Rotate 2+ years; use certified seed.",
+          "Destroy cull piles and volunteers."
+        ]
+      }
     ]
   },
   "Potato___Late_blight": {
+    "condition": "Late blight (Phytophthora infestans)",
     "label": "Potato___Late_blight",
     "plant": "Potato",
-    "condition": "Late blight (Phytophthora infestans)",
-    "summary": "Oomycete disease causing water-soaked lesions with white sporulation; devastates quickly.",
-    "treatments": [
-      "Apply a late-blight-specific fungicide (e.g. cymoxanil, fluopicolide) preventively or at first sign.",
-      "Destroy infected plants to limit spread."
-    ],
     "prevention": [
       "Use certified seed tubers.",
       "Avoid overhead irrigation; hill plants to cover tubers."
+    ],
+    "severity": "HIGH",
+    "summary": "Oomycete disease causing water-soaked lesions with white sporulation; devastates quickly.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Pull and destroy entire infected plants (bag/burn); alert your extension if widespread.",
+          "Apply a late-blight-specific fungicide (mancozeb/cymoxanil) on remaining plants."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Continue the fungicide program every 5-7 days; avoid overhead irrigation.",
+          "Monitor the rest of the field daily."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant resistant varieties; destroy cull piles and volunteers.",
+          "Rotate and use certified seed."
+        ]
+      }
     ]
   },
   "Potato___healthy": {
+    "condition": "Healthy",
     "label": "Potato___healthy",
     "plant": "Potato",
-    "condition": "Healthy",
-    "summary": "No disease symptoms detected on this leaf.",
-    "treatments": [],
     "prevention": [
       "Continue routine monitoring and balanced care."
-    ]
+    ],
+    "severity": "HEALTHY",
+    "summary": "No disease symptoms detected on this leaf.",
+    "treatmentStages": []
   },
   "Raspberry___healthy": {
+    "condition": "Healthy",
     "label": "Raspberry___healthy",
     "plant": "Raspberry",
-    "condition": "Healthy",
-    "summary": "No disease symptoms detected on this leaf.",
-    "treatments": [],
     "prevention": [
       "Prune canes for airflow; maintain weed control."
-    ]
+    ],
+    "severity": "HEALTHY",
+    "summary": "No disease symptoms detected on this leaf.",
+    "treatmentStages": []
   },
   "Soybean___healthy": {
+    "condition": "Healthy",
     "label": "Soybean___healthy",
     "plant": "Soybean",
-    "condition": "Healthy",
-    "summary": "No disease symptoms detected on this leaf.",
-    "treatments": [],
     "prevention": [
       "Rotate crops; scout during reproductive stages."
-    ]
+    ],
+    "severity": "HEALTHY",
+    "summary": "No disease symptoms detected on this leaf.",
+    "treatmentStages": []
   },
   "Squash___Powdery_mildew": {
+    "condition": "Powdery mildew (Podosphaera/Erysiphe spp.)",
     "label": "Squash___Powdery_mildew",
     "plant": "Squash",
-    "condition": "Powdery mildew (Podosphaera/Erysiphe spp.)",
-    "summary": "Fungal disease causing white powdery colonies on upper leaf surfaces.",
-    "treatments": [
-      "Apply sulfur or a targeted fungicide (e.g. myclobutanil) at first sign."
-    ],
     "prevention": [
       "Plant resistant cultivars.",
       "Space plants for airflow and avoid excess nitrogen."
+    ],
+    "severity": "MEDIUM",
+    "summary": "Fungal disease causing white powdery colonies on upper leaf surfaces.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Apply sulfur or a myclobutanil fungicide at first sign of white colonies.",
+          "Remove infected older leaves."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat sprays per label (7-14 days); thin vines for airflow.",
+          "Avoid excess nitrogen."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant resistant cultivars; rotate crops.",
+          "Space hills for airflow."
+        ]
+      }
     ]
   },
   "Strawberry___Leaf_scorch": {
+    "condition": "Leaf scorch (Diplocarpon earlianum)",
     "label": "Strawberry___Leaf_scorch",
     "plant": "Strawberry",
-    "condition": "Leaf scorch (Diplocarpon earlianum)",
-    "summary": "Fungal disease causing purple-bordered, scorched-looking leaf spots.",
-    "treatments": [
-      "Apply captan, myclobutanil, or thiophanate-methyl at early symptom onset."
-    ],
     "prevention": [
       "Remove old/diseased leaves after harvest.",
       "Improve air drainage and avoid overhead irrigation."
+    ],
+    "severity": "HIGH",
+    "summary": "Fungal disease causing purple-bordered, scorched-looking leaf spots.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Remove infected leaves; apply captan or myclobutanil at first sign.",
+          "Thin the planting to improve airflow."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat protectant sprays every 7-14 days.",
+          "Renovate beds after harvest to remove infected foliage."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant resistant varieties; space plants for airflow.",
+          "Rotate beds every few years; destroy debris."
+        ]
+      }
     ]
   },
   "Strawberry___healthy": {
+    "condition": "Healthy",
     "label": "Strawberry___healthy",
     "plant": "Strawberry",
-    "condition": "Healthy",
-    "summary": "No disease symptoms detected on this leaf.",
-    "treatments": [],
     "prevention": [
       "Continue routine monitoring and balanced care."
-    ]
+    ],
+    "severity": "HEALTHY",
+    "summary": "No disease symptoms detected on this leaf.",
+    "treatmentStages": []
   },
   "Tomato___Bacterial_spot": {
+    "condition": "Bacterial spot (Xanthomonas spp.)",
     "label": "Tomato___Bacterial_spot",
     "plant": "Tomato",
-    "condition": "Bacterial spot (Xanthomonas spp.)",
-    "summary": "Bacterial disease causing small water-soaked spots that become raised and necrotic.",
-    "treatments": [
-      "Apply copper + mancozeb sprays (rotate to manage resistance)."
-    ],
     "prevention": [
       "Use disease-free seed; hot-water seed treatment.",
       "Avoid overhead irrigation and wet handling."
+    ],
+    "severity": "HIGH",
+    "summary": "Bacterial disease causing small water-soaked spots that become raised and necrotic.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Remove infected leaves and fruit; apply a copper-mancozeb bactericide at first symptoms.",
+          "Stake and mulch to reduce splash."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat sprays every 7-10 days; avoid working wet plants.",
+          "Limit overhead irrigation."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Rotate to non-host crops for 2+ years; use certified seed and resistant varieties.",
+          "Sanitize stakes and tools."
+        ]
+      }
     ]
   },
   "Tomato___Early_blight": {
+    "condition": "Early blight (Alternaria solani)",
     "label": "Tomato___Early_blight",
     "plant": "Tomato",
-    "condition": "Early blight (Alternaria solani)",
-    "summary": "Fungal disease with target-ring lesions on older leaves; progresses upward.",
-    "treatments": [
-      "Apply chlorothalonil or copper on a 7-10 day schedule from first symptom."
-    ],
     "prevention": [
       "Mulch to prevent soil splash.",
       "Stake plants and rotate crops."
+    ],
+    "severity": "HIGH",
+    "summary": "Fungal disease with target-ring lesions on older leaves; progresses upward.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Remove infected lower leaves; apply chlorothalonil or a copper fungicide at first lesions.",
+          "Mulch and stake to prevent soil splash."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat protectant sprays every 7-10 days.",
+          "Maintain even soil moisture."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Rotate 2+ years; use resistant varieties.",
+          "Destroy crop debris at season end."
+        ]
+      }
     ]
   },
   "Tomato___Late_blight": {
+    "condition": "Late blight (Phytophthora infestans)",
     "label": "Tomato___Late_blight",
     "plant": "Tomato",
-    "condition": "Late blight (Phytophthora infestans)",
-    "summary": "Oomycete disease causing large greasy lesions; can kill plants in days.",
-    "treatments": [
-      "Apply a late-blight-specific fungicide preventively; destroy infected plants."
-    ],
     "prevention": [
       "Use certified transplants.",
       "Avoid overhead irrigation; space for airflow."
+    ],
+    "severity": "HIGH",
+    "summary": "Oomycete disease causing large greasy lesions; can kill plants in days.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Pull and destroy entire infected plants (bag/burn); alert your extension if widespread.",
+          "Apply a late-blight-specific fungicide on remaining plants."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Continue the fungicide program every 5-7 days; avoid overhead irrigation.",
+          "Monitor the rest of the planting daily."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant resistant varieties; destroy volunteers and cull piles.",
+          "Rotate and use certified seed/transplants."
+        ]
+      }
     ]
   },
   "Tomato___Leaf_Mold": {
+    "condition": "Leaf mold (Passalora fulva)",
     "label": "Tomato___Leaf_Mold",
     "plant": "Tomato",
-    "condition": "Leaf mold (Passalora fulva)",
-    "summary": "Fungal disease of the lower canopy; olive velvety sporulation on leaf undersides.",
-    "treatments": [
-      "Apply chlorothalonil or copper; improve ventilation."
-    ],
     "prevention": [
       "Increase greenhouse ventilation and reduce humidity.",
       "Remove lower infected leaves."
+    ],
+    "severity": "MEDIUM",
+    "summary": "Fungal disease of the lower canopy; olive velvety sporulation on leaf undersides.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Remove infected lower leaves; increase ventilation; apply chlorothalonil or copper.",
+          "Lower greenhouse humidity if applicable."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat sprays every 7-14 days; prune lower foliage.",
+          "Increase plant spacing."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant resistant varieties; improve spacing and ventilation.",
+          "Sanitize stakes and structures."
+        ]
+      }
     ]
   },
   "Tomato___Septoria_leaf_spot": {
+    "condition": "Septoria leaf spot (Septoria lycopersici)",
     "label": "Tomato___Septoria_leaf_spot",
     "plant": "Tomato",
-    "condition": "Septoria leaf spot (Septoria lycopersici)",
-    "summary": "Fungal disease causing many small circular spots with dark borders and gray centers.",
-    "treatments": [
-      "Apply chlorothalonil or mancozeb every 7-10 days."
-    ],
     "prevention": [
       "Mulch around plants; remove lower infected leaves.",
       "Rotate crops and avoid overhead irrigation."
+    ],
+    "severity": "HIGH",
+    "summary": "Fungal disease causing many small circular spots with dark borders and gray centers.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Remove infected lower leaves; apply chlorothalonil or mancozeb at first lesions.",
+          "Mulch and stake to suppress soil splash."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat protectant sprays every 7-10 days.",
+          "Avoid overhead irrigation."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Rotate 2+ years; destroy crop debris.",
+          "Use certified seed."
+        ]
+      }
     ]
   },
   "Tomato___Spider_mites Two-spotted_spider_mite": {
+    "condition": "Spider mites (Tetranychus urticae)",
     "label": "Tomato___Spider_mites Two-spotted_spider_mite",
     "plant": "Tomato",
-    "condition": "Spider mites (Tetranychus urticae)",
-    "summary": "Mite pest causing fine stippling and webbing; leaves look dusty and yellowed.",
-    "treatments": [
-      "Release predatory mites or apply an appropriate miticide (avoid flaring with broad insecticides)."
-    ],
     "prevention": [
       "Hose off foliage; avoid dusty, hot, dry conditions.",
       "Monitor undersides of leaves."
+    ],
+    "severity": "MEDIUM",
+    "summary": "Mite pest causing fine stippling and webbing; leaves look dusty and yellowed.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Spray undersides of leaves with a strong stream of water or insecticidal soap.",
+          "Apply a miticide (abamectin/spiromesifen) if the infestation is heavy."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat treatments to hit all life stages - mites rebound quickly.",
+          "Monitor with a hand lens."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Encourage predatory mites and bugs; avoid broad-spectrum insecticides that kill predators.",
+          "Manage dust by periodically hosing foliage."
+        ]
+      }
     ]
   },
   "Tomato___Target_Spot": {
+    "condition": "Target spot (Corynespora cassiicola)",
     "label": "Tomato___Target_Spot",
     "plant": "Tomato",
-    "condition": "Target spot (Corynespora cassiicola)",
-    "summary": "Fungal disease causing dark target-like lesions; thrives in humid conditions.",
-    "treatments": [
-      "Apply chlorothalonil, azoxystrobin, or mancozeb at early symptom onset."
-    ],
     "prevention": [
       "Improve airflow; reduce leaf wetness.",
       "Remove infected tissue."
+    ],
+    "severity": "HIGH",
+    "summary": "Fungal disease causing dark target-like lesions; thrives in humid conditions.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "Remove infected leaves; apply chlorothalonil or a strobilurin at first lesions.",
+          "Reduce humidity in greenhouses; mulch and stake."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Repeat protectant sprays every 7-10 days.",
+          "Improve airflow."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Rotate 2+ years; destroy crop debris.",
+          "Improve spacing and ventilation."
+        ]
+      }
     ]
   },
   "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+    "condition": "Tomato yellow leaf curl virus (Begomovirus)",
     "label": "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
     "plant": "Tomato",
-    "condition": "Tomato yellow leaf curl virus (Begomovirus)",
-    "summary": "Whitefly-vectored viral disease causing yellow, curled, stunted leaves.",
-    "treatments": [
-      "No cure: remove infected plants.",
-      "Control whiteflies with approved insecticides and reflective mulch."
-    ],
     "prevention": [
       "Use virus-resistant cultivars.",
       "Exclude whiteflies with row covers in nurseries."
+    ],
+    "severity": "CRITICAL",
+    "summary": "Whitefly-vectored viral disease causing yellow, curled, stunted leaves.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "No cure - remove and destroy infected plants.",
+          "Control the whitefly vector with insecticidal soap or a labeled neonicotinoid."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Continue whitefly management on remaining plants; use reflective mulches to deter whiteflies.",
+          "Monitor whitefly populations with yellow sticky traps."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant resistant varieties; use virus-free transplants.",
+          "Manage whiteflies area-wide and weed out reservoir hosts."
+        ]
+      }
     ]
   },
   "Tomato___Tomato_mosaic_virus": {
+    "condition": "Tomato mosaic virus (ToMV)",
     "label": "Tomato___Tomato_mosaic_virus",
     "plant": "Tomato",
-    "condition": "Tomato mosaic virus (ToMV)",
-    "summary": "Contact-transmitted virus causing mottled, malformed leaves.",
-    "treatments": [
-      "No cure: remove infected plants and disinfect tools.",
-      "Use virus-free seed and resistant cultivars."
-    ],
     "prevention": [
       "Do not smoke/handle tobacco near tomatoes.",
       "Sanitize tools and hands between plants."
+    ],
+    "severity": "CRITICAL",
+    "summary": "Contact-transmitted virus causing mottled, malformed leaves.",
+    "treatmentStages": [
+      {
+        "stage": "Immediate",
+        "steps": [
+          "No cure - remove and destroy infected plants.",
+          "Do not handle healthy plants after touching infected ones."
+        ]
+      },
+      {
+        "stage": "Short-term",
+        "steps": [
+          "Disinfect tools and hands with a 10% bleach solution between plants.",
+          "Control broadleaf weeds; do not use tobacco near plants."
+        ]
+      },
+      {
+        "stage": "Long-term",
+        "steps": [
+          "Plant resistant varieties (Tm-2 gene); use virus-free seed.",
+          "Rotate crops and sterilize soil/stakes."
+        ]
+      }
     ]
   },
   "Tomato___healthy": {
+    "condition": "Healthy",
     "label": "Tomato___healthy",
     "plant": "Tomato",
-    "condition": "Healthy",
-    "summary": "No disease symptoms detected on this leaf.",
-    "treatments": [],
     "prevention": [
       "Continue routine monitoring and balanced care."
-    ]
+    ],
+    "severity": "HEALTHY",
+    "summary": "No disease symptoms detected on this leaf.",
+    "treatmentStages": []
   }
 }

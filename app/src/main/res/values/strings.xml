@@ -122,6 +122,16 @@
     <string name="result_prevention">Prevention</string>
     <string name="result_scan_another">Scan another leaf</string>
     <string name="result_none">No scan result yet. Run a scan from the Scan tab.</string>
+
+    <!-- Phase 7: severity + staged treatment -->
+    <string name="severity_healthy">Healthy</string>
+    <string name="severity_low">Low</string>
+    <string name="severity_medium">Medium</string>
+    <string name="severity_high">High</string>
+    <string name="severity_critical">Critical</string>
+    <string name="result_severity_label">Severity: %1$s</string>
+    <string name="result_stage_label">%1$s actions</string>
+    <string name="result_healthy_note">No treatment needed — keep up routine care to maintain healthy foliage.</string>
     <string name="result_explanation">Why this prediction (Grad-CAM)</string>
     <string name="result_save_to_plant">Save to plant</string>
     <string name="result_save_new">Save as new plant</string>
