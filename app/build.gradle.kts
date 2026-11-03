@@ -208,12 +208,11 @@ dependencies {
 }
 
 // Bound the forked test JVM so the unit-test runner does not OOM alongside the Gradle daemon in
-// memory-constrained environments (the runner only hosts JUnit + Truth/Mockk/Turbine, no app
-// framework). Also caps the daemon-side managed metaspace via gradle.properties.
+// memory-constrained environments. Robolectric (Phase 8 LeafGuardDatabaseMigrationTest) loads the
+// android-all framework jar, so the heap + metaspace are sized for that; the daemon-side metaspace
+// is capped separately via gradle.properties. robolectric.offline is left unset so Robolectric can
+// resolve the SDK 34 android-all jar from Maven Central at runtime (the CI runner has access).
 tasks.withType<Test>().configureEach {
-    maxHeapSize = "512m"
-    jvmArgs("-XX:MaxMetaspaceSize=256m", "-XX:+UseSerialGC")
-    // Robolectric is on the classpath but no test uses it; prevent it from downloading Android
-    // SDK jars on first run (keeps the test JVM lean and offline).
-    systemProperty("robolectric.offline", "true")
+    maxHeapSize = "2g"
+    jvmArgs("-XX:MaxMetaspaceSize=512m", "-XX:+UseSerialGC")
 }
