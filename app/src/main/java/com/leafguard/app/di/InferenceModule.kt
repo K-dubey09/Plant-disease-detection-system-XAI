@@ -30,7 +30,7 @@ object InferenceModule {
     @Provides
     @Singleton
     fun provideModelBuffer(@ApplicationContext ctx: Context): ByteBuffer {
-        val bytes = ctx.assets.open("models/plant_disease_mobilenetv2.tflite").use { it.readBytes() }
+        val bytes = ctx.assets.open("models/plant_disease.tflite").use { it.readBytes() }
         return ByteBuffer.allocateDirect(bytes.size).order(ByteOrder.nativeOrder()).put(bytes)
     }
 

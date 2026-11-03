@@ -66,10 +66,10 @@ jobs:
 
       # Pull the TRAINED TFLite model from the private Kaggle dataset so the APK ships with a
       # real classifier instead of the untrained demo model committed in assets/. The Kaggle
-      # dataset "plant-disease-xai-models" holds plant_disease_mobilenetv2.tflite (FP32, 9 MB,
-      # MobileNetV2, 38 PlantVillage classes, 78.6% accuracy) plus labels.txt and metadata.
-      # Skipped when KAGGLE_USERNAME/KAGGLE_KEY are unset (fork PRs) -- the committed demo model
-      # is then used and the build still works.
+      # dataset "plant-disease-xai-models" holds plant_disease.tflite (FP32, ~112 MB, Swin-Tiny,
+      # 38 PlantVillage classes, 98.59% accuracy) plus labels.txt and metadata. Targeted at
+      # 6GB+ RAM devices. Skipped when KAGGLE_USERNAME/KAGGLE_KEY are unset (fork PRs) -- the
+      # committed demo model is then used and the build still works.
       - name: Pull trained TFLite model from Kaggle
         if: env.KAGGLE_USERNAME != '' && env.KAGGLE_KEY != ''
         shell: bash
@@ -80,14 +80,14 @@ jobs:
           kaggle datasets download -d "${KAGGLE_USERNAME}/plant-disease-xai-models" \
             -p /tmp/kaggle-model --unzip
           # Drop the trained model + labels into the assets dir, overwriting the demo model.
-          # The filename MUST stay plant_disease_mobilenetv2.tflite (what InferenceModule.kt loads).
-          install -m 0644 /tmp/kaggle-model/plant_disease_mobilenetv2.tflite \
-            app/src/main/assets/models/plant_disease_mobilenetv2.tflite
+          # The filename MUST stay plant_disease.tflite (what InferenceModule.kt loads).
+          install -m 0644 /tmp/kaggle-model/plant_disease.tflite \
+            app/src/main/assets/models/plant_disease.tflite
           if [ -f /tmp/kaggle-model/labels.txt ]; then
             install -m 0644 /tmp/kaggle-model/labels.txt app/src/main/assets/models/labels.txt
           fi
           ls -la app/src/main/assets/models/
-          echo "Trained model size: $(stat -c%s app/src/main/assets/models/plant_disease_mobilenetv2.tflite) bytes"
+          echo "Trained model size: $(stat -c%s app/src/main/assets/models/plant_disease.tflite) bytes"
 
       # Decode the release keystore from KEYSTORE_BASE64. The keystore itself is never committed.
       # KEYSTORE_FILE is written to GITHUB_ENV so build.gradle.kts (which reads System.getenv)

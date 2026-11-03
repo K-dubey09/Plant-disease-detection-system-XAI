@@ -8,12 +8,14 @@ import org.tensorflow.lite.Interpreter
 /**
  * Wraps the TFLite [Interpreter] for leaf-disease classification. Preprocesses the bitmap to the
  * model's expected [1, INPUT_SIZE, INPUT_SIZE, 3] float input in [0, 1] (the model contains its
- * own Rescaling to [-1, 1]); runs inference; returns the top-k labels with confidences.
+ * own ImageNet normalization baked into the graph); runs inference; returns the top-k labels with
+ * confidences.
  *
- * The shipped `plant_disease_mobilenetv2.tflite` is a MobileNetV2 backbone + 38-class head whose
- * head is UNTRAINED on PlantVillage, so its predictions are a pipeline demo, not reliable
- * diagnoses. The classifier code is production-shaped: swap the .tflite for a trained model and
- * the same path yields real results.
+ * The shipped `plant_disease.tflite` is a Swin-Tiny transformer + 38-class head fine-tuned on
+ * PlantVillage to 98.59% validation accuracy (source: surgeonwz/plant-village on HuggingFace).
+ * The [0,1]->ImageNet-normalized rescaling and the final Softmax are baked into the .tflite graph
+ * itself, so this code feeds raw [0,1] pixels and reads real probabilities -- no app-side
+ * preprocessing or postprocessing. See models/conversion/ for the PyTorch->ONNX->TFLite pipeline.
  */
 class DiseaseClassifier(
     private val interpreter: Interpreter,
