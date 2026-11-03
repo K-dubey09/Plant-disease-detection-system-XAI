@@ -19,6 +19,17 @@ jobs:
 
     env:
       GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.caching=true"
+      # Secrets are mapped to env vars ONCE at the job level. Step `if:` conditions then check
+      # `env.X` (NOT `secrets.X` -- the secrets context is not available in step if-conditionals
+      # in all GitHub Actions validation paths), and run-scripts read `$X` instead of interpolating
+      # `${{ secrets.X }}` (which would risk logging the secret). Empty when the secret is unset
+      # (e.g. a fork PR), so the corresponding step is skipped gracefully.
+      KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+      KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -57,14 +68,11 @@ jobs:
       # real classifier instead of the untrained demo model committed in assets/. The Kaggle
       # dataset "plant-disease-xai-models" holds plant_disease_mobilenetv2.tflite (FP32, 9 MB,
       # MobileNetV2, 38 PlantVillage classes, 78.6% accuracy) plus labels.txt and metadata.
-      # Requires repo secrets KAGGLE_USERNAME and KAGGLE_KEY. Skipped on PRs from forks (no
-      # secret access) -- in that case the committed demo model is used and the build still works.
+      # Skipped when KAGGLE_USERNAME/KAGGLE_KEY are unset (fork PRs) -- the committed demo model
+      # is then used and the build still works.
       - name: Pull trained TFLite model from Kaggle
-        if: ${{ secrets.KAGGLE_USERNAME != '' && secrets.KAGGLE_KEY != '' }}
+        if: env.KAGGLE_USERNAME != '' && env.KAGGLE_KEY != ''
         shell: bash
-        env:
-          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
-          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
         run: |
           set -euo pipefail
           python3 -m pip install --quiet kaggle
@@ -81,22 +89,22 @@ jobs:
           ls -la app/src/main/assets/models/
           echo "Trained model size: $(stat -c%s app/src/main/assets/models/plant_disease_mobilenetv2.tflite) bytes"
 
-      # Decode the release keystore from the KEYSTORE_BASE64 secret. The keystore itself is
-      # never committed. KEYSTORE_FILE is then set so build.gradle.kts attaches the release
-      # signer to the release buildType (the direct fix for the "problem parsing the package"
-      # install error on unsigned release APKs). Skipped on PRs from forks (no secret access).
+      # Decode the release keystore from KEYSTORE_BASE64. The keystore itself is never committed.
+      # KEYSTORE_FILE is written to GITHUB_ENV so build.gradle.kts (which reads System.getenv)
+      # attaches the release signer to the release buildType -- the direct fix for the "problem
+      # parsing the package" install error on unsigned release APKs. Skipped when KEYSTORE_BASE64
+      # is unset (fork PRs); the release build then stays unsigned and Gradle warns.
       - name: Decode release keystore
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        if: env.KEYSTORE_BASE64 != ''
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/keystore
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > /tmp/keystore/leafguard-release.keystore
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > /tmp/keystore/leafguard-release.keystore
           echo "KEYSTORE_FILE=/tmp/keystore/leafguard-release.keystore" >> "$GITHUB_ENV"
-          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
-          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> "$GITHUB_ENV"
-          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> "$GITHUB_ENV"
           echo "Keystore decoded: $(stat -c%s /tmp/keystore/leafguard-release.keystore) bytes"
+          # KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD are already in the job env from secrets,
+          # so the gradle build step sees them directly.
 
       - name: Cache Gradle
         uses: actions/cache@v4
@@ -126,7 +134,7 @@ jobs:
         run: ./gradlew lintDebug --stacktrace
 
       - name: Verify release APK is signed (if keystore was decoded)
-        if: ${{ env.KEYSTORE_FILE != '' }}
+        if: env.KEYSTORE_FILE != ''
         shell: bash
         run: |
           set -euo pipefail
