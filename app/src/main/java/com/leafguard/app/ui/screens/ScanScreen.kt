@@ -165,7 +165,8 @@ fun ScanScreen(
                 )
 
                 else -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    if (bitmap != null) {
+                    val staged = bitmap
+                    if (staged != null) {
                         // Retake / re-import a fresh photo.
                         OutlinedButton(
                             onClick = { bitmap = null; viewModel.reset() },
@@ -175,7 +176,7 @@ fun ScanScreen(
                             Text(stringResource(R.string.scan_retake), modifier = Modifier.padding(start = 8.dp))
                         }
                         Button(
-                            onClick = { viewModel.analyze(bitmap, plantId) },
+                            onClick = { viewModel.analyze(staged, plantId) },
                             enabled = ui !is ScanViewModel.UiState.Analyzing,
                             modifier = Modifier.fillMaxWidth().height(50.dp),
                         ) {
