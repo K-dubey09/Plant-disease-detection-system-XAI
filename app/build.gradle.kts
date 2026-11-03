@@ -31,12 +31,28 @@ android {
     // runners regenerate ~/.android/debug.keystore each run, so successive debug APKs are signed
     // with different keys and Android refuses to install a new build over an old one ("there was
     // a problem parsing the package"). Debug keys are non-secret by convention.
+    //
+    // Release signing: the keystore is NOT committed (release keys are secret). Credentials come
+    // from environment variables, set in CI from GitHub repository secrets:
+    //   KEYSTORE_FILE       - path to the decoded release keystore on the runner
+    //   KEYSTORE_PASSWORD   - keystore password
+    //   KEY_ALIAS           - key alias inside the keystore
+    //   KEY_PASSWORD        - password for that key
+    // When KEYSTORE_FILE is absent (e.g. a local build), the release config stays empty and the
+    // release buildType below does NOT attach a signer, so Gradle emits an unsigned release APK
+    // with a warning rather than silently shipping an uninstallable one.
     signingConfigs {
         getByName("debug") {
             storeFile = file("keystores/debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
+        }
+        create("release") {
+            System.getenv("KEYSTORE_FILE")?.takeIf { it.isNotEmpty() }?.let { storeFile = file(it) }
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias = System.getenv("KEY_ALIAS") ?: ""
+            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
         }
     }
 
@@ -54,6 +70,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Attach the release signer only when KEYSTORE_FILE is set (CI). Without it the build
+            // is unsigned and Gradle warns -- which is the correct behaviour for a local dev build
+            // and the direct fix for the "problem parsing the package" install error on releases.
+            if (!System.getenv("KEYSTORE_FILE").isNullOrEmpty()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

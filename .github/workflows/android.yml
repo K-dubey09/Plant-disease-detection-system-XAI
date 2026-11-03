@@ -53,6 +53,51 @@ jobs:
           [ -z "$SDKMGR" ] || yes | "$SDKMGR" "platforms;android-35" "build-tools;35.0.0" > /dev/null 2>&1
           exit 0
 
+      # Pull the TRAINED TFLite model from the private Kaggle dataset so the APK ships with a
+      # real classifier instead of the untrained demo model committed in assets/. The Kaggle
+      # dataset "plant-disease-xai-models" holds plant_disease_mobilenetv2.tflite (FP32, 9 MB,
+      # MobileNetV2, 38 PlantVillage classes, 78.6% accuracy) plus labels.txt and metadata.
+      # Requires repo secrets KAGGLE_USERNAME and KAGGLE_KEY. Skipped on PRs from forks (no
+      # secret access) -- in that case the committed demo model is used and the build still works.
+      - name: Pull trained TFLite model from Kaggle
+        if: ${{ secrets.KAGGLE_USERNAME != '' && secrets.KAGGLE_KEY != '' }}
+        shell: bash
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet kaggle
+          mkdir -p /tmp/kaggle-model
+          kaggle datasets download -d "${KAGGLE_USERNAME}/plant-disease-xai-models" \
+            -p /tmp/kaggle-model --unzip
+          # Drop the trained model + labels into the assets dir, overwriting the demo model.
+          # The filename MUST stay plant_disease_mobilenetv2.tflite (what InferenceModule.kt loads).
+          install -m 0644 /tmp/kaggle-model/plant_disease_mobilenetv2.tflite \
+            app/src/main/assets/models/plant_disease_mobilenetv2.tflite
+          if [ -f /tmp/kaggle-model/labels.txt ]; then
+            install -m 0644 /tmp/kaggle-model/labels.txt app/src/main/assets/models/labels.txt
+          fi
+          ls -la app/src/main/assets/models/
+          echo "Trained model size: $(stat -c%s app/src/main/assets/models/plant_disease_mobilenetv2.tflite) bytes"
+
+      # Decode the release keystore from the KEYSTORE_BASE64 secret. The keystore itself is
+      # never committed. KEYSTORE_FILE is then set so build.gradle.kts attaches the release
+      # signer to the release buildType (the direct fix for the "problem parsing the package"
+      # install error on unsigned release APKs). Skipped on PRs from forks (no secret access).
+      - name: Decode release keystore
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/keystore
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > /tmp/keystore/leafguard-release.keystore
+          echo "KEYSTORE_FILE=/tmp/keystore/leafguard-release.keystore" >> "$GITHUB_ENV"
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> "$GITHUB_ENV"
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "Keystore decoded: $(stat -c%s /tmp/keystore/leafguard-release.keystore) bytes"
+
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -65,8 +110,14 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      # Build the debug APK (signed with the pinned debug keystore committed at app/keystores/).
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
+
+      # Build the release APK. When KEYSTORE_FILE is set (keystore-decode step ran), Gradle
+      # signs it with the release config; otherwise it is unsigned and Gradle warns.
+      - name: Build release APK
+        run: ./gradlew assembleRelease --stacktrace
 
       - name: Run unit tests
         run: ./gradlew test --stacktrace
@@ -74,12 +125,34 @@ jobs:
       - name: Run Android Lint
         run: ./gradlew lintDebug --stacktrace
 
+      - name: Verify release APK is signed (if keystore was decoded)
+        if: ${{ env.KEYSTORE_FILE != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$(ls app/build/outputs/apk/release/*.apk | head -1)"
+          echo "Release APK: $APK ($(stat -c%s "$APK") bytes)"
+          # apksigner verify prints "Verified using v1 scheme" / "v2 scheme" lines on success.
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK" || {
+            echo "WARNING: release APK signature verification failed -- install will show 'problem parsing the package'."
+            exit 1
+          }
+          echo "Release APK is signed and installable."
+
       - name: Upload debug APK
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: leafguard-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+
+      - name: Upload release APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: leafguard-release-apk
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
 
       - name: Upload test reports

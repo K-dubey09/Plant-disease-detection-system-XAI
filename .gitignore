@@ -62,3 +62,14 @@ Thumbs.db
 *.pem
 *.key
 secrets.properties
+
+# Model conversion artifacts — the trained model lives in the private Kaggle dataset
+# (kushagradubey09/plant-disease-xai-models) and is pulled by CI. Only the conversion
+# scripts under models/conversion/ are tracked. The repo's app/src/main/assets/models/
+# keeps the untrained demo .tflite as a local-build fallback.
+models/source/
+models/onnx/
+models/saved_model/
+models/saved_model_int8src/
+models/tflite/
+models/metadata/

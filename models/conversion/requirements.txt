@@ -1,0 +1,15 @@
+# Python dependencies for the LeafGuard PyTorch -> TFLite conversion pipeline.
+# Install in a clean venv:  pip install -r models/conversion/requirements.txt
+#
+# CPU-only builds are used (no CUDA) so the pipeline runs in a 4 GB RAM sandbox.
+torch>=2.14
+torchvision
+transformers>=4.38,<4.46
+onnx>=1.15
+onnxruntime
+onnx2tf
+tensorflow-cpu
+kaggle              # for uploading the model dataset + CI pulling it during APK build
+pillow
+numpy
+requests
