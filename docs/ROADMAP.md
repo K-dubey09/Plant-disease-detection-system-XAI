@@ -208,7 +208,7 @@ lint, v1+v2 signing, GitHub Release publish (137.4 MB APK).
 
 ---
 
-## Phase 7 — Treatment suggestions engine ⏳
+## Phase 7 — Treatment suggestions engine ✅
 
 **Goal:** every diagnosis carries actionable, disease-specific guidance.
 
@@ -218,6 +218,30 @@ lint, v1+v2 signing, GitHub Release publish (137.4 MB APK).
 - `SuggestionsEngine` use-case: given a `Diagnosis`, return ranked suggestions.
 - `ResultScreen` suggestions section + "add to plant care log" action.
 - Unit tests: every one of the 38 classes resolves to a non-empty suggestion set.
+
+**Status: complete.** The suggestion layer moved from a flat treatments list to a per-disease
+knowledge base with a severity tier, stage-aware treatment steps (Immediate / Short-term /
+Long-term), and a prevention checklist for all 38 PlantVillage classes.
+- `Severity` enum (`HEALTHY` / `LOW` / `MEDIUM` / `HIGH` / `CRITICAL`) with a `fromString` fallback;
+  `TreatmentStage(stage, steps)`; `Suggestion` gains `severity` + `treatmentStages` and drops the
+  flat `treatments` list. `SuggestionEngine.severityFor(label)` reads the tier without pulling the
+  whole `Suggestion`. `SuggestionParser` parses the new fields; a legacy flat `treatments` array
+  degrades to a single Immediate stage, and a missing severity degrades to MEDIUM.
+- `disease_suggestions.json` regenerated: 26 diseases get a severity (14 HIGH / 9 MEDIUM / 3
+  CRITICAL) and three ordered stages with concrete IPM steps, keeping the prior
+  summary/condition/plant/prevention; the 12 `___healthy` classes are `HEALTHY` with empty stages +
+  wellness prevention. The 3 CRITICAL entries are the incurable/lethal: citrus greening, tomato
+  yellow leaf curl virus, tomato mosaic virus.
+- `ResultScreen` renders a colored `SeverityBadge` (green/blue/amber/orange/red by tier) above the
+  summary, then the staged treatment sections + prevention; a HEALTHY result shows a "no treatment
+  needed" note instead of treatment stages.
+- 11 new JVM tests: `SuggestionEngineTest` (7, rewritten for the new model) and the new
+  `SuggestionParserTest` (8), which parses the production JSON via a real `org.json:json`
+  (testImplementation, shadowing Android's stub) and asserts 38 entries, every `labels.txt` key
+  present, 26 diseases x 3 stages with steps, 12 healthy + empty, the 3 CRITICAL labels, stage
+  order Immediate -> Short-term -> Long-term, and non-empty prevention/condition/summary. **120 JVM
+  unit tests total.** CI run 41735955447 (commit `aceaee0`) is fully green on the first try:
+  debug + release build, 120 tests, lint, v1+v2 signing, GitHub Release publish (137.4 MB APK).
 
 ---
 

@@ -39,7 +39,7 @@
 | `HistoryViewModel` | UI | 6 | Join scans ↔ plant name in-memory; per-plant filter → `HistoryItem` list |
 | `RecordsViewModel` + `CsvGenerator` / `PdfExporter` | UI | 6 | Group scans by plant → per-plant disease log; pure RFC-4180 CSV (tested) + on-device `PdfDocument` PDF |
 | `ImagesViewModel` | UI | 6 | Group image-bearing scans (`sourceImagePath != null`) by plant → Coil `AsyncImage` gallery |
-| `SuggestionsEngine` | Domain | 7 | Map 38 classes → treatment steps + severity |
+| `SuggestionsEngine`, `SuggestionParser`, `Severity`/`TreatmentStage` | Domain | 7 | Map 38 classes → severity tier + staged treatment (Immediate/Short-term/Long-term) + prevention; parser reads the production JSON (org.json), engine exposes `suggest`/`severityFor` |
 
 ## Navigation graph
 
