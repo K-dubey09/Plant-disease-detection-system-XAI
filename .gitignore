@@ -40,6 +40,10 @@ captures/
 # Keystore files — NEVER commit signing keys
 *.jks
 *.keystore
+# Exception: the pinned DEBUG keystore is committed so every CI/local debug build shares one
+# signer (otherwise ephemeral CI runners regenerate the debug key and sideload upgrades fail).
+# Debug keys are non-secret (standard Android credentials). NEVER do this for a release key.
+!app/keystores/debug.keystore
 
 # Google Services (e.g. APIs or Firebase) — not used now, but keep ignored
 google-services.json
