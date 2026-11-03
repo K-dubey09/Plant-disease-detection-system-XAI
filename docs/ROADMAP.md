@@ -84,14 +84,18 @@ runs 50 tests with 0 failures locally.
 
 **Deliverables**
 - Model assets under `app/src/main/assets/models/`:
-  `plant_disease_mobilenetv2.tflite` (~8.7 MB, MobileNetV2 ImageNet backbone + 38-class head),
-  `labels.txt` (38 PlantVillage classes), `disease_suggestions.json` (label → summary/treatments/prevention,
-  authored from general IPM knowledge). The model is a **demo** — the backbone is ImageNet-pretrained but
-  the 38-class head is untrained, so predictions are placeholders, not reliable diagnoses. The inference +
-  explanation pipeline is production-shaped: swap the `.tflite` for a trained PlantVillage model and the same
-  path yields real results. `scripts/gen_phase4_assets.py` + `scripts/gen_demo_model.py` regenerate them.
+  `plant_disease.tflite` (~112 MB, Swin-Tiny transformer, patch4-window7-224, 38-class head,
+  **98.59% PlantVillage validation accuracy**), `labels.txt` (38 PlantVillage classes),
+  `disease_suggestions.json` (label → summary/treatments/prevention, authored from general IPM
+  knowledge). The model is a **fully-trained classifier** — source is `surgeonwz/plant-village` on
+  HuggingFace (apache-2.0), converted via the PyTorch→ONNX→TFLite pipeline in
+  `models/conversion/convert.py` (with `dynamo=False` to avoid an onnx2tf Loop-op blocker, and
+  ImageNet normalization + Softmax baked into the graph). Targeted at 6GB+ RAM devices. The
+  committed asset is an untrained demo fallback; CI pulls the trained model from the private
+  Kaggle dataset `kushagradubey09/plant-disease-xai-models` (v2) on every build.
 - `DiseaseClassifier` wraps the TFLite `Interpreter`: preprocesses the bitmap to `[1,224,224,3]` float `[0,1]`
-  (the model owns the [-1,1] rescaling), runs inference, returns top-k labels + confidences.
+  (the model owns the ImageNet normalization, baked in as ONNX Sub(mean)/Div(std) nodes), runs inference,
+  returns top-k labels + confidences (the Softmax is also baked in, so confidences are real probabilities).
 - `SaliencyGenerator` produces an occlusion-sensitivity heatmap (model-agnostic — true Grad-CAM needs the
   convolutional activations/gradients that TFLite's Interpreter does not expose): a coarse 8×8 grid is greyed
   cell-by-cell and the predicted class's confidence drop per cell becomes the heatmap.
@@ -100,12 +104,14 @@ runs 50 tests with 0 failures locally.
 - Hilt `InferenceModule` binds a singleton `Interpreter` (loaded compression-safe via `readBytes()` into a
   direct `ByteBuffer`), labels, suggestions, classifier, saliency generator, suggestion engine.
 - UI: real `ScanScreen` (photo-picker import → classify → saliency → result) and `ResultScreen`
-  (prediction + confidence bar + source/heatmap side-by-side + alternatives + advisory + DEMO banner).
+  (prediction + confidence bar + source/heatmap side-by-side + alternatives + advisory).
 - Tests: `LabelParserTest`, `SuggestionEngineTest`, `OcclusionRectsTest`, `PixelNormalizeTest` (4 each, 16 new).
 
 **Validation:** `./gradlew :app:testDebugUnitTest` → **66 JVM unit tests pass** (50 from Phases 2–3 + 16 new),
 0 failures, locally and on CI. `assembleDebug` (APK) built by CI; the 4 GB dev sandbox OOMs at the D8 dex step.
-The occlusion heatmap + Interpreter runtime path are verified on-device via the shipped demo model.
+The TFLite conversion is verified off-device: the Swin FP32 model matches its ONNX reference to a mean max
+abs diff of 4.42×10⁻⁸ with 8/8 argmax agreement; the occlusion heatmap + Interpreter runtime path are
+exercised on-device via the trained Swin model (98.59% accuracy).
 
 ---
 
