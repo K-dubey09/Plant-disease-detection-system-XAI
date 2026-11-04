@@ -24,7 +24,7 @@ import kotlin.math.sqrt
  * clinician most needs to see.
  */
 class SaliencyGenerator(
-    private val classifier: DiseaseClassifier,
+    private val classifier: LeafClassifier,
     private val gridSize: Int = DEFAULT_GRID,
 ) {
     fun generate(bitmap: Bitmap): Bitmap {

@@ -72,4 +72,11 @@ models/onnx/
 models/saved_model/
 models/saved_model_int8src/
 models/tflite/
+
+# v1.5.0.0 JK-TK YOLOv11 detector model — 228 MB FP32 TFLite, over GitHub's 100 MB file
+# limit, so it is NOT committed. It ships inside the v1.5.0.0 release APK. To rebuild from
+# source, download jktk_detector.tflite from the v1.5.0.0 release assets (or pull it from the
+# Kaggle dataset) into app/src/main/assets/models/ before running ./gradlew assembleDebug.
+# The small labels_jktk.txt + disease_suggestions_jktk.json ARE tracked.
+app/src/main/assets/models/jktk_detector.tflite
 models/metadata/

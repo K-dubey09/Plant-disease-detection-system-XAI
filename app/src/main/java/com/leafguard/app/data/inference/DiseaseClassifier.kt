@@ -38,8 +38,8 @@ class DiseaseClassifier(
     private val interpreter: Interpreter,
     private val labels: List<DiseaseLabel>,
     private val inputSize: Int = IMAGE_SIZE,
-) {
-    fun classify(bitmap: Bitmap): Diagnosis {
+) : LeafClassifier {
+    override fun classify(bitmap: Bitmap): Diagnosis {
         val input = bitmapToInput(bitmap, inputSize)
         val output = Array(1) { FloatArray(labels.size) }
         // TFLite's Interpreter is not thread-safe; serialize the native forward pass so a new

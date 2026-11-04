@@ -58,5 +58,12 @@ class ModelIntegrity(
          * swap and regenerate with `sha256sum app/src/main/assets/models/plant_disease.tflite`.
          */
         const val EXPECTED_SHA256 = "28efdfa3e1ded7dcf8c0829c51a593f3f457d9535afb93703a91d4a478468b58"
+
+        /**
+         * SHA-256 of the primary `app/src/main/assets/models/jktk_detector.tflite`
+         * (JK-TK YOLOv11 detector, 116 classes, 228,101,416 bytes). Update after every model swap
+         * via `sha256sum app/src/main/assets/models/jktk_detector.tflite`.
+         */
+        const val EXPECTED_SHA256_JKTK = "a6e35929b98f50b8b8f418a286b47ae2d65cefdc8958d1d5a05018b03ae3a885"
     }
 }
