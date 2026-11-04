@@ -3,6 +3,7 @@ package com.leafguard.app.di
 import android.content.Context
 import com.leafguard.app.data.inference.DiseaseClassifier
 import com.leafguard.app.data.inference.LabelParser
+import com.leafguard.app.data.inference.ModelIntegrity
 import com.leafguard.app.data.inference.SaliencyGenerator
 import com.leafguard.app.data.inference.SuggestionEngine
 import com.leafguard.app.data.inference.SuggestionParser
@@ -69,5 +70,9 @@ object InferenceModule {
     @Singleton
     fun provideSuggestionEngine(suggestions: Map<String, Suggestion>): SuggestionEngine =
         SuggestionEngine(suggestions)
+
+    @Provides
+    @Singleton
+    fun provideModelIntegrity(modelBuffer: ByteBuffer): ModelIntegrity = ModelIntegrity(modelBuffer)
 }
 

@@ -5,9 +5,10 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafguard.app.data.inference.DiseaseClassifier
+import com.leafguard.app.data.inference.ModelIntegrity
+import com.leafguard.app.data.inference.SaliencyRunner
 import com.leafguard.app.data.inference.ScanResult
 import com.leafguard.app.data.inference.ScanResultHolder
-import com.leafguard.app.data.inference.SaliencyGenerator
 import com.leafguard.app.data.inference.SuggestionEngine
 import com.leafguard.app.data.local.ScanEntity
 import com.leafguard.app.di.IoDispatcher
@@ -51,13 +52,22 @@ import kotlinx.coroutines.withContext
 @HiltViewModel
 class ScanViewModel @Inject constructor(
     private val classifier: DiseaseClassifier,
-    private val saliencyGenerator: SaliencyGenerator,
+    private val saliencyRunner: SaliencyRunner,
     private val suggestionEngine: SuggestionEngine,
     private val holder: ScanResultHolder,
     private val scanRepository: ScanRepository,
+    private val modelIntegrity: ModelIntegrity,
     @ApplicationContext private val context: Context,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : ViewModel() {
+
+    /**
+     * True when the bundled model's SHA-256 no longer matches the digest captured at build time —
+     * i.e. the .tflite was modified after the APK was signed. The scan screen surfaces a non-blocking
+     * "model integrity warning" banner so the user knows the diagnosis is untrusted, without refusing
+     * to scan (the classification still runs; it is the *trust* in it that is flagged).
+     */
+    val modelTampered: Boolean = !modelIntegrity.isIntact()
 
     sealed interface UiState {
         data object Idle : UiState
@@ -98,30 +108,15 @@ class ScanViewModel @Inject constructor(
                 holder.set(ScanResult(scanId, diagnosis, suggestion, bitmap, saliency = null))
                 _ui.value = UiState.Done(scanId)
 
-                // Slow path: occlusion heatmap, launched as a sibling on viewModelScope (a
-                // SupervisorJob child) so it is independent of the fast-path coroutine and survives
-                // navigation away from the scan screen (the scan back-stack entry stays alive).
-                // Failures are contained: Done is already emitted, so the scan is never stranded.
-                computeSaliencyInBackground(scanId, bitmap)
+                // Slow path: occlusion heatmap, delegated to [SaliencyRunner] which runs on an
+                // APPLICATION-scoped coroutine. This is the fix for the Phase 9 regression where the
+                // heatmap was a viewModelScope sibling: that scope is cancelled when this ViewModel
+                // is cleared (scan -> result -> dashboard pops the scan entry), which aborted
+                // in-flight heatmaps and left saliencyImagePath null forever. The application scope
+                // outlives this ViewModel, so the heatmap always runs to completion.
+                saliencyRunner.generateFor(scanId, bitmap)
             } catch (e: Exception) {
                 _ui.value = UiState.Error(e.message ?: "Analysis failed.")
-            }
-        }
-    }
-
-    private fun computeSaliencyInBackground(scanId: Long, bitmap: Bitmap) {
-        viewModelScope.launch {
-            try {
-                val saliency = withContext(io) { saliencyGenerator.generate(bitmap) }
-                val saliencyPath = saveBitmap(saliency, "saliency", Bitmap.CompressFormat.PNG)
-                if (saliencyPath != null) {
-                    scanRepository.setSaliencyImage(scanId, saliencyPath)
-                }
-                holder.updateSaliency(scanId, saliency)
-            } catch (e: Exception) {
-                // Best-effort explainability: a heatmap failure must never break the scan. Done was
-                // already emitted; the result screen stays without a heatmap and the row keeps a
-                // null saliencyImagePath, which the Images gallery handles gracefully.
             }
         }
     }

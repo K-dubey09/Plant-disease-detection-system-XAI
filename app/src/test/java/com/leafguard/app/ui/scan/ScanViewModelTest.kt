@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.leafguard.app.data.inference.DiseaseClassifier
+import com.leafguard.app.data.inference.ModelIntegrity
+import com.leafguard.app.data.inference.SaliencyRunner
 import com.leafguard.app.data.inference.ScanResult
 import com.leafguard.app.data.inference.ScanResultHolder
 import com.leafguard.app.data.inference.SaliencyGenerator
@@ -15,6 +17,8 @@ import com.leafguard.app.domain.model.Diagnosis
 import com.leafguard.app.domain.model.DiseaseLabel
 import io.mockk.every
 import io.mockk.mockk
+import java.nio.ByteBuffer
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -42,6 +46,11 @@ import org.robolectric.annotation.Config
  *    back-filled in Room.
  *  - plantId threads through to the persisted row (per-plant growth tracking).
  *  - A stale heatmap from a superseded scan does not clobber the current scan's holder.
+ *
+ * Fix 2: the heatmap now runs through [SaliencyRunner] on an application-scoped coroutine (here a
+ * [CoroutineScope] on the test dispatcher) rather than `viewModelScope`; the tests below prove the
+ * same user-facing behaviour still holds — Done still fires immediately, a successful heatmap still
+ * back-fills Room + the holder, and a throwing heatmap still never strands the scan.
  *
  * Runs under Robolectric (real Context + Bitmap on the JVM); [DiseaseClassifier] /
  * [SaliencyGenerator] are mocked with MockK since they wrap a TFLite Interpreter we cannot
@@ -81,10 +90,17 @@ class ScanViewModelTest {
 
     private fun vm() = ScanViewModel(
         classifier,
-        saliency,
+        // The heatmap runs through SaliencyRunner on an application-scoped coroutine (a plain
+        // CoroutineScope on the test dispatcher here). advanceUntilIdle drives it because it shares
+        // the same StandardTestDispatcher as viewModelScope (set via Dispatchers.setMain).
+        saliencyRunner = SaliencyRunner(saliency, repo, holder, context, CoroutineScope(dispatcher), dispatcher),
         SuggestionEngine(emptyMap()),
         holder,
         repo,
+        // A 9-byte zero buffer cannot match the real model's digest, so isIntact() is false. These
+        // tests do not assert the integrity flag — they cover analyze/heatmap behaviour — so the
+        // tampered verdict is harmless here. (The flag itself is covered by ModelIntegrityTest.)
+        modelIntegrity = ModelIntegrity(ByteBuffer.allocate(9)),
         context,
         dispatcher,
     )

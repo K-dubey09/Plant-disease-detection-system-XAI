@@ -16,6 +16,12 @@ import org.tensorflow.lite.Interpreter
  * The [0,1]->ImageNet-normalized rescaling and the final Softmax are baked into the .tflite graph
  * itself, so this code feeds raw [0,1] pixels and reads real probabilities -- no app-side
  * preprocessing or postprocessing. See models/conversion/ for the PyTorch->ONNX->TFLite pipeline.
+ *
+ * Trust: TFLite's [Interpreter] does not validate the model bytes, so a swapped or corrupt .tflite
+ * still produces confident labels. Runtime integrity is verified separately by [ModelIntegrity]
+ * (SHA-256 of this model's buffer against a build-time digest); a mismatch surfaces a warning
+ * banner on the scan/result screens, since a tampered model's diagnoses are untrustworthy however
+ * confident the softmax reads.
  */
 class DiseaseClassifier(
     private val interpreter: Interpreter,

@@ -14,13 +14,27 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class IoDispatcher
+
+/**
+ * Marks the application-scoped [CoroutineScope] — a [SupervisorJob] tied to the singleton component,
+ * used by long-lived background work (e.g. [com.leafguard.app.data.inference.SaliencyRunner]) that
+ * must outlive any single ViewModel. Unlike `viewModelScope`, this scope is never cancelled while
+ * the app process is alive, so a heatmap kicked off from the scan screen keeps running to completion
+ * even after the user navigates away and the [ScanViewModel][com.leafguard.app.ui.scan.ScanViewModel]
+ * is cleared.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ApplicationScope
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -50,4 +64,10 @@ object RepositoryModule {
     @Provides
     @IoDispatcher
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @Provides
+    @Singleton
+    @ApplicationScope
+    fun provideApplicationScope(@IoDispatcher io: CoroutineDispatcher): CoroutineScope =
+        CoroutineScope(SupervisorJob() + io)
 }

@@ -3,6 +3,7 @@ package com.leafguard.app.ui.scan
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafguard.app.data.inference.ModelIntegrity
 import com.leafguard.app.data.inference.ScanResult
 import com.leafguard.app.data.inference.ScanResultHolder
 import com.leafguard.app.data.local.Plant
@@ -38,8 +39,18 @@ class ResultViewModel @Inject constructor(
     holder: ScanResultHolder,
     private val scanRepository: ScanRepository,
     private val plantRepository: PlantRepository,
+    private val modelIntegrity: ModelIntegrity,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+    /**
+     * True when the bundled model's SHA-256 no longer matches the build-time digest — the .tflite
+     * was modified after the APK was signed. The result screen shows a "model integrity warning"
+     * banner so a tampered-model diagnosis is presented as untrusted rather than authoritative,
+     * without hiding the rest of the result (the heatmap, suggestion, and growth-tracking actions
+     * stay available).
+     */
+    val modelTampered: Boolean = !modelIntegrity.isIntact()
 
     val result: StateFlow<ScanResult?> = holder.state
 
