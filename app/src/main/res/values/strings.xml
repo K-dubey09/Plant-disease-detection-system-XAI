@@ -114,6 +114,7 @@
     <string name="result_title">Scan result</string>
     <string name="result_confidence">Confidence</string>
     <string name="result_confidence_value">Plant: %1$s · Confidence: %2$s</string>
+    <string name="result_low_confidence_hint">Low-confidence result. The model is uncertain on this photo — for a more reliable diagnosis, photograph a single leaf against a plain background, filling the frame.</string>
     <string name="result_image_label">Leaf</string>
     <string name="result_heatmap_label">Why (saliency)</string>
     <string name="result_heatmap_caption">Red regions most influenced the prediction; blue regions least (occlusion sensitivity).</string>

@@ -56,6 +56,9 @@ import com.leafguard.app.domain.model.Severity
 import com.leafguard.app.ui.components.LeafScaffold
 import com.leafguard.app.ui.scan.ResultViewModel
 
+/** Confidence fraction below which the result screen shows a "low confidence" advisory banner. */
+private const val LOW_CONFIDENCE_THRESHOLD = 0.5f
+
 /**
  * Shows the latest scan's prediction, confidence, an occlusion-sensitivity heatmap explaining
  * which image regions drove the prediction, and advisory treatment/prevention. Falls back to a
@@ -142,6 +145,24 @@ private fun ResultContent(
             progress = { top.topConfidence.coerceIn(0f, 1f) },
             modifier = Modifier.fillMaxWidth().height(8.dp),
         )
+
+        // Low-confidence banner: the PlantVillage-trained model is often uncertain on real-world
+        // field photos (different backgrounds/lighting than the lab training set). When the top
+        // probability is below the threshold, surface that honestly and suggest the framing that
+        // matches the training distribution (single leaf, plain background, fills the frame).
+        if (top.topConfidence < LOW_CONFIDENCE_THRESHOLD) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+            ) {
+                Text(
+                    text = stringResource(R.string.result_low_confidence_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(12.dp),
+                )
+            }
+        }
 
         // Source + saliency side by side. The heatmap slot streams in after the diagnosis: while
         // saliency is null (the 64-pass SaliencyGenerator still running in the background) we show a
