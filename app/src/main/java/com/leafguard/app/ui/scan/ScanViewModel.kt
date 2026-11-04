@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafguard.app.data.inference.DiseaseClassifier
+import com.leafguard.app.data.inference.LeafClassifier
 import com.leafguard.app.data.inference.ModelIntegrity
 import com.leafguard.app.data.inference.SaliencyRunner
 import com.leafguard.app.data.inference.ScanResult
@@ -51,7 +51,7 @@ import kotlinx.coroutines.withContext
  */
 @HiltViewModel
 class ScanViewModel @Inject constructor(
-    private val classifier: DiseaseClassifier,
+    private val classifier: LeafClassifier,
     private val saliencyRunner: SaliencyRunner,
     private val suggestionEngine: SuggestionEngine,
     private val holder: ScanResultHolder,

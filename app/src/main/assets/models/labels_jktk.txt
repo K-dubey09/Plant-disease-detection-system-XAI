@@ -1,0 +1,116 @@
+corn rust
+cherry leaf
+soybean leaf
+strawberry leaf
+corn northern leaf blight
+coffee leaf
+cauliflower alternaria leaf spot
+celery leaf
+strawberry anthracnose
+basil leaf
+citrus greening disease
+grape downy mildew
+blueberry rust
+celery anthracnose
+ginger leaf
+cucumber angular leaf spot
+broccoli downy mildew
+blueberry leaf
+cucumber bacterial wilt
+grape leaf
+garlic leaf
+plum leaf
+ginger sheath blight
+rice leaf
+cabbage leaf
+corn gray leaf spot
+eggplant leaf
+basil downy mildew
+tomato bacterial leaf spot
+cherry leaf spot
+cucumber leaf
+apple black rot
+eggplant cercospora leaf spot
+maple leaf
+cucumber powdery mildew
+bean rust
+rice sheath blight
+zucchini yellow mosaic virus
+bean leaf
+citrus canker
+peach leaf curl
+maple tar spot
+tomato leaf mold
+plum pocket disease
+tomato early blight
+cherry powdery mildew
+grape leaf spot
+bell pepper leaf spot
+apple rust
+cabbage alternaria leaf spot
+tobacco mosaic virus
+apple mosaic virus
+potato late blight
+tomato septoria leaf spot
+potato leaf
+lettuce mosaic virus
+garlic leaf blight
+grapevine leafroll disease
+carrot cavity spot
+cauliflower leaf
+rice blast
+tomato late blight
+banana panama disease
+ginger leaf spot
+garlic rust
+banana leaf
+lettuce downy mildew
+grape black rot
+raspberry leaf
+tomato mosaic virus
+tomato leaf
+squash powdery mildew
+squash leaf
+corn leaf
+lettuce leaf
+tobacco leaf
+bean halo blight
+apple leaf
+bell pepper leaf
+broccoli leaf
+apple scab
+strawberry leaf scorch
+corn smut
+coffee leaf rust
+peach leaf
+bean mosaic virus
+celery early blight
+potato early blight
+tomato yellow leaf curl virus
+Cassava Bacterial Blight
+Cassava Brown Leaf Spot
+Cassava Healthy
+Cassava Mosaic
+Cassava Root Rot
+Corn Brown Spots
+Corn Charcoal
+Corn Chlorotic Leaf Spot
+Corn Gray leaf spot
+Corn Healthy
+Corn Insects Damages
+Corn Mildew
+Corn Purple Discoloration
+Corn Smut
+Corn Streak
+Corn Stripe
+Corn Violet Decoloration
+Corn Yellow Spots
+Corn Yellowing
+Corn leaf blight
+Corn rust leaf
+Tomato Brown Spots
+Tomato bacterial wilt
+Tomato blight leaf
+Tomato healthy
+Tomato leaf mosaic virus
+Tomato leaf yellow virus
