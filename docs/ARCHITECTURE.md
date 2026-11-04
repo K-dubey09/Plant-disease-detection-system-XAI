@@ -40,6 +40,7 @@
 | `RecordsViewModel` + `CsvGenerator` / `PdfExporter` | UI | 6 | Group scans by plant → per-plant disease log; pure RFC-4180 CSV (tested) + on-device `PdfDocument` PDF |
 | `ImagesViewModel` | UI | 6 | Group image-bearing scans (`sourceImagePath != null`) by plant → Coil `AsyncImage` gallery |
 | `SuggestionsEngine`, `SuggestionParser`, `Severity`/`TreatmentStage` | Domain | 7 | Map 38 classes → severity tier + staged treatment (Immediate/Short-term/Long-term) + prevention; parser reads the production JSON (org.json), engine exposes `suggest`/`severityFor` |
+| `LeafGuardDatabaseMigrationTest`, `PdfExporter.formatRecordLine`/`displayName` | Test | 8 | Robolectric JVM test seeds a real v1 DB → opens at v3 with both migrations, asserting the plant survives + scans gains the image-path columns + a scan with paths round-trips; PdfExporter record-line logic extracted as `internal` pure helpers + JVM-tested (the `PdfDocument` write stays instrumented-only). Tagged v1.0.0 release; APK excl-model 25.0 MB. |
 
 ## Navigation graph
 
