@@ -40,6 +40,22 @@ class FakeScanRepository(initial: List<ScanEntity> = emptyList()) : ScanReposito
 
     override suspend fun count(): Int = rows.size
 
+    override suspend fun attachScanToPlant(scanId: Long, plantId: Long?) {
+        val idx = rows.indexOfFirst { it.id == scanId }
+        if (idx >= 0) {
+            rows[idx] = rows[idx].copy(plantId = plantId)
+            publish()
+        }
+    }
+
+    override suspend fun setSaliencyImage(scanId: Long, path: String?) {
+        val idx = rows.indexOfFirst { it.id == scanId }
+        if (idx >= 0) {
+            rows[idx] = rows[idx].copy(saliencyImagePath = path)
+            publish()
+        }
+    }
+
     private fun publish() {
         state.value = rows.sortedByDescending { it.createdAt }
     }

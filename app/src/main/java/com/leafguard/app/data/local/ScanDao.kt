@@ -33,4 +33,12 @@ interface ScanDao {
 
     @Query("SELECT COUNT(*) FROM scans")
     suspend fun count(): Int
+
+    /** Phase 9: link (or re-link/unlink) a scan to a plant so it joins that plant's growth timeline. */
+    @Query("UPDATE scans SET plantId = :plantId WHERE id = :id")
+    suspend fun updatePlantId(id: Long, plantId: Long?)
+
+    /** Phase 9: back-fill the saliency image path once the (slow) heatmap finishes in the background. */
+    @Query("UPDATE scans SET saliencyImagePath = :path WHERE id = :id")
+    suspend fun updateSaliencyImagePath(id: Long, path: String?)
 }

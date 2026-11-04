@@ -12,20 +12,33 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -38,6 +51,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafguard.app.R
 import com.leafguard.app.data.inference.ScanResult
+import com.leafguard.app.data.local.Plant
 import com.leafguard.app.domain.model.Severity
 import com.leafguard.app.ui.components.LeafScaffold
 import com.leafguard.app.ui.scan.ResultViewModel
@@ -46,6 +60,12 @@ import com.leafguard.app.ui.scan.ResultViewModel
  * Shows the latest scan's prediction, confidence, an occlusion-sensitivity heatmap explaining
  * which image regions drove the prediction, and advisory treatment/prevention. Falls back to a
  * "no scan yet" state if the holder is empty (e.g. process death).
+ *
+ * Phase 9: the heatmap is streamed in after the diagnosis is shown, so while
+ * [ScanResult.saliency] is null the heatmap slot renders a "Generating explanation…" placeholder
+ * instead of blocking the whole screen. The "Add to plant" action lets the user link an unattached
+ * scan to any plant (or create a new plant from it) so it joins that plant's per-plant Records
+ * growth timeline.
  */
 @Composable
 fun ResultScreen(
@@ -54,11 +74,21 @@ fun ResultScreen(
     viewModel: ResultViewModel = hiltViewModel(),
 ) {
     val result by viewModel.result.collectAsStateWithLifecycle()
+    val plants by viewModel.plants.collectAsStateWithLifecycle()
+    val attachedPlantId by viewModel.attachedPlantId.collectAsStateWithLifecycle()
 
     LeafScaffold(title = stringResource(R.string.result_title), onBack = onBack) { padding ->
         when (val r = result) {
             null -> NoScanState(Modifier.fillMaxSize().padding(padding))
-            else -> ResultContent(r, Modifier.fillMaxSize().padding(padding), onScanAnother)
+            else -> ResultContent(
+                result = r,
+                plants = plants,
+                attachedPlantId = attachedPlantId,
+                onAttachToPlant = viewModel::attachToPlant,
+                onCreatePlantAndAttach = viewModel::createPlantAndAttach,
+                onScanAnother = onScanAnother,
+                modifier = Modifier.fillMaxSize().padding(padding),
+            )
         }
     }
 }
@@ -66,9 +96,18 @@ fun ResultScreen(
 @Composable
 private fun ResultContent(
     result: ScanResult,
-    modifier: Modifier,
+    plants: List<Plant>,
+    attachedPlantId: Long?,
+    onAttachToPlant: (Long?) -> Unit,
+    onCreatePlantAndAttach: (String, String) -> Unit,
     onScanAnother: () -> Unit,
+    modifier: Modifier,
 ) {
+    var showAttachDialog by remember { mutableStateOf(false) }
+    val attachedPlantName = remember(plants, attachedPlantId) {
+        attachedPlantId?.let { id -> plants.firstOrNull { it.id == id }?.name }
+    }
+
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -104,7 +143,9 @@ private fun ResultContent(
             modifier = Modifier.fillMaxWidth().height(8.dp),
         )
 
-        // Source + saliency side by side.
+        // Source + saliency side by side. The heatmap slot streams in after the diagnosis: while
+        // saliency is null (the 64-pass SaliencyGenerator still running in the background) we show a
+        // placeholder so the user already has their diagnosis + advisory instead of a stuck spinner.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -114,9 +155,8 @@ private fun ResultContent(
                 bitmap = result.source,
                 modifier = Modifier.weight(1f),
             )
-            LabeledImage(
-                label = stringResource(R.string.result_heatmap_label),
-                bitmap = result.saliency,
+            SaliencySlot(
+                saliency = result.saliency,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -174,13 +214,73 @@ private fun ResultContent(
             }
         }
 
+        // Phase 9 growth tracking: link this scan to a plant so it joins that plant's Records timeline.
+        AttachToPlantSection(
+            attachedPlantName = attachedPlantName,
+            onOpenDialog = { showAttachDialog = true },
+        )
+
         Button(
             onClick = onScanAnother,
             modifier = Modifier.fillMaxWidth().height(50.dp),
         ) {
-            androidx.compose.material3.Icon(Icons.Outlined.Refresh, contentDescription = null)
+            Icon(Icons.Outlined.Refresh, contentDescription = null)
             Text(stringResource(R.string.result_scan_another), modifier = Modifier.padding(start = 8.dp))
         }
+    }
+
+    if (showAttachDialog) {
+        AttachToPlantDialog(
+            plants = plants,
+            onDismiss = { showAttachDialog = false },
+            onAttachExisting = { plantId ->
+                onAttachToPlant(plantId)
+                showAttachDialog = false
+            },
+            onCreateNew = { name, species ->
+                onCreatePlantAndAttach(name, species)
+                showAttachDialog = false
+            },
+        )
+    }
+}
+
+/**
+ * The heatmap half of the source/saliency pair. While [ScanResult.saliency] is null the slow
+ * occlusion-sensitivity pass is still running in the background; we show a placeholder card with a
+ * spinner so the diagnosis above is already useful instead of the whole screen waiting on the
+ * heatmap. Once [ScanResultHolder.updateSaliency] streams the bitmap in, the slot swaps to it.
+ */
+@Composable
+private fun SaliencySlot(saliency: android.graphics.Bitmap?, modifier: Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Column(Modifier.padding(8.dp).height(180.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            if (saliency != null) {
+                Image(
+                    bitmap = saliency.asImageBitmap(),
+                    contentDescription = stringResource(R.string.result_heatmap_label),
+                    contentScale = ContentScale.FillWidth,
+                    modifier = Modifier.fillMaxWidth().sizeIn(maxHeight = 160.dp),
+                )
+            } else {
+                CircularProgressIndicator()
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.result_heatmap_loading),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+        Text(
+            stringResource(R.string.result_heatmap_label),
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(top = 4.dp),
+        )
     }
 }
 
@@ -200,6 +300,146 @@ private fun LabeledImage(label: String, bitmap: android.graphics.Bitmap, modifie
             Text(label, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 4.dp))
         }
     }
+}
+
+/**
+ * The "Add to plant" trigger. When the scan is already linked, shows the plant name + a "Change
+ * plant" button; otherwise shows a "Save to plant" button that opens the picker dialog.
+ */
+@Composable
+private fun AttachToPlantSection(
+    attachedPlantName: String?,
+    onOpenDialog: () -> Unit,
+) {
+    if (attachedPlantName != null) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.result_attached_to, attachedPlantName),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        stringResource(R.string.result_attach_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                OutlinedButton(onClick = onOpenDialog) {
+                    Icon(Icons.Outlined.SwapHoriz, contentDescription = null)
+                    Text(stringResource(R.string.result_change_plant), modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+        }
+    } else {
+        Button(
+            onClick = onOpenDialog,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+        ) {
+            Icon(Icons.Outlined.Add, contentDescription = null)
+            Text(stringResource(R.string.result_save_to_plant), modifier = Modifier.padding(start = 8.dp))
+        }
+    }
+}
+
+/**
+ * Picker: choose an existing plant, or create a new plant (name + species) and attach the scan to
+ * it as its first recorded state. Confirm is disabled until a valid selection exists (an existing
+ * plant id, or a non-blank name for the create-new option).
+ */
+@Composable
+private fun AttachToPlantDialog(
+    plants: List<Plant>,
+    onDismiss: () -> Unit,
+    onAttachExisting: (Long) -> Unit,
+    onCreateNew: (String, String) -> Unit,
+) {
+    var createNew by remember { mutableStateOf(plants.isEmpty()) }
+    var selectedPlantId by remember { mutableStateOf<Long?>(null) }
+    var name by remember { mutableStateOf("") }
+    var species by remember { mutableStateOf("") }
+
+    val canConfirm = if (createNew) name.isNotBlank() else selectedPlantId != null
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.result_attach_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(R.string.result_attach_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (plants.isEmpty()) {
+                    Text(
+                        stringResource(R.string.result_attach_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    plants.forEach { plant ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().selectable(
+                                selected = !createNew && selectedPlantId == plant.id,
+                                onClick = { createNew = false; selectedPlantId = plant.id },
+                            ).padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(selected = !createNew && selectedPlantId == plant.id, onClick = null)
+                            Text(plant.name, modifier = Modifier.padding(start = 8.dp))
+                        }
+                    }
+                    HorizontalDivider()
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth().selectable(
+                        selected = createNew,
+                        onClick = { createNew = true; selectedPlantId = null },
+                    ).padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(selected = createNew, onClick = null)
+                    Text(stringResource(R.string.result_save_new), modifier = Modifier.padding(start = 8.dp))
+                }
+                if (createNew) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text(stringResource(R.string.result_attach_name)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = species,
+                        onValueChange = { species = it },
+                        label = { Text(stringResource(R.string.result_attach_species)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = canConfirm,
+                onClick = {
+                    if (createNew) onCreateNew(name.trim(), species.trim())
+                    else selectedPlantId?.let(onAttachExisting)
+                },
+            ) { Text(stringResource(R.string.result_attach_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.result_attach_cancel)) }
+        },
+    )
 }
 
 @Composable

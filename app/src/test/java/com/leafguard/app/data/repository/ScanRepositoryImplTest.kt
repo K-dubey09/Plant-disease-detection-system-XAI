@@ -90,4 +90,53 @@ class ScanRepositoryImplTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun attachScanToPlant_linksUnattachedScanAndEmits() = runTest {
+        val r = repo()
+        val id = r.saveScan(scan(plantId = null))
+        assertThat(r.getScan(id)?.plantId).isNull()
+
+        r.attachScanToPlant(id, 42L)
+
+        assertThat(r.getScan(id)?.plantId).isEqualTo(42L)
+        r.observeScan(id).test {
+            assertThat(awaitItem()?.plantId).isEqualTo(42L)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun attachScanToPlant_canRelinkToDifferentPlantForGrowthTracking() = runTest {
+        val r = repo()
+        val id = r.saveScan(scan(plantId = 1L))
+        r.attachScanToPlant(id, 2L)
+        assertThat(r.getScan(id)?.plantId).isEqualTo(2L)
+        // The scan now appears under the new plant's per-plant history, not the old one's.
+        assertThat(r.observeScansForPlant(1L).first()).isEmpty()
+        assertThat(r.observeScansForPlant(2L).first()).hasSize(1)
+    }
+
+    @Test
+    fun attachScanToPlant_nullPlantId_unlinksScan() = runTest {
+        val r = repo()
+        val id = r.saveScan(scan(plantId = 5L))
+        r.attachScanToPlant(id, null)
+        assertThat(r.getScan(id)?.plantId).isNull()
+    }
+
+    @Test
+    fun setSaliencyImage_backfillsPathAndEmits() = runTest {
+        val r = repo()
+        val id = r.saveScan(scan())
+        assertThat(r.getScan(id)?.saliencyImagePath).isNull()
+
+        r.setSaliencyImage(id, "/scans/sal.png")
+
+        assertThat(r.getScan(id)?.saliencyImagePath).isEqualTo("/scans/sal.png")
+        r.observeScan(id).test {
+            assertThat(awaitItem()?.saliencyImagePath).isEqualTo("/scans/sal.png")
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 }

@@ -137,6 +137,18 @@
     <string name="result_save_to_plant">Save to plant</string>
     <string name="result_save_new">Save as new plant</string>
 
+    <!-- Phase 9: streamed heatmap + growth tracking -->
+    <string name="result_heatmap_loading">Generating explanation…</string>
+    <string name="result_attach_title">Add to plant</string>
+    <string name="result_attach_subtitle">Track this scan as a new state in a plant\'s growth timeline.</string>
+    <string name="result_attach_empty">No plants yet — create one below to start tracking growth.</string>
+    <string name="result_attach_name">Plant name</string>
+    <string name="result_attach_species">Species (optional)</string>
+    <string name="result_attach_confirm">Add</string>
+    <string name="result_attach_cancel">Cancel</string>
+    <string name="result_change_plant">Change plant</string>
+    <string name="result_attached_to">Saved to %1$s</string>
+
     <!-- Assets -->
     <string name="asset_model" translatable="false">models/plant_disease_mobilenetv2.tflite</string>
     <string name="asset_labels" translatable="false">models/labels.txt</string>

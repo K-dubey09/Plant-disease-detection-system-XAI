@@ -41,6 +41,22 @@ class FakeScanDao : ScanDao {
 
     override suspend fun count(): Int = rows.size
 
+    override suspend fun updatePlantId(id: Long, plantId: Long?) {
+        val idx = rows.indexOfFirst { it.id == id }
+        if (idx >= 0) {
+            rows[idx] = rows[idx].copy(plantId = plantId)
+            publish()
+        }
+    }
+
+    override suspend fun updateSaliencyImagePath(id: Long, path: String?) {
+        val idx = rows.indexOfFirst { it.id == id }
+        if (idx >= 0) {
+            rows[idx] = rows[idx].copy(saliencyImagePath = path)
+            publish()
+        }
+    }
+
     private fun publish() {
         state.value = rows.sortedByDescending { it.createdAt }
     }

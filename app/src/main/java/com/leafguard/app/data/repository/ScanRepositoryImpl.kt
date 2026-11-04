@@ -35,4 +35,10 @@ class ScanRepositoryImpl @Inject constructor(
     override suspend fun deleteScan(id: Long) = withContext(io) { dao.deleteById(id) }
 
     override suspend fun count(): Int = withContext(io) { dao.count() }
+
+    override suspend fun attachScanToPlant(scanId: Long, plantId: Long?) =
+        withContext(io) { dao.updatePlantId(scanId, plantId) }
+
+    override suspend fun setSaliencyImage(scanId: Long, path: String?) =
+        withContext(io) { dao.updateSaliencyImagePath(scanId, path) }
 }

@@ -25,13 +25,28 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Runs the classify -> saliency -> suggest pipeline for a leaf photo, persists the outcome as a
- * [ScanEntity] (Phase 5), publishes the Bitmaps to [ScanResultHolder] for the result screen, and
- * reports the new [ScanEntity] id via [UiState.Done] so the UI can navigate to `result/{scanId}`.
- * The UI observes [ui] to show staging ("Classifying…", "Generating explanation…", "Saving scan…").
+ * Runs the classify -> suggest -> persist pipeline for a leaf photo, then publishes the result so
+ * the UI can navigate to `result/{scanId}` immediately (Phase 9). The occlusion-sensitivity
+ * heatmap is computed afterwards in an independent background coroutine and streamed onto the
+ * result screen via [ScanResultHolder.updateSaliency] when ready, so the user sees their diagnosis
+ * at once instead of staring at a "Generating explanation…" spinner for the ~6-32 s the 64-pass
+ * [SaliencyGenerator] takes.
+ *
+ * Phase 9 reordering (the fix for "scan page stuck in scanning state"): previously `Done(scanId)`
+ * was emitted only after classify -> saliency -> suggest -> save all completed serially, so the
+ * scan screen stayed on the Analyzing spinner for the whole heatmap. Now the scan is persisted and
+ * `Done` is emitted right after classify + suggest + source-image save (one forward pass — a second
+ * or two), and history updates at the same instant because Room's observe Flow reacts to the
+ * `saveScan` insert. The heatmap is best-effort: if it throws (OOM, TFLite error) the scan is
+ * already complete and the failure is swallowed — the result screen simply stays without a heatmap
+ * instead of stranding the UI.
+ *
+ * The UI observes [ui] to show staging ("Classifying…", "Saving scan…"). The heatmap stage no
+ * longer gates [ui] (it shows on the result screen via the nullable [ScanResult.saliency]).
  *
  * [plantId] is non-null when the scan was launched from PlantDetail ("Scan this plant"); the scan
- * row is then linked to that plant so per-plant history (Phase 6) can filter by it.
+ * row is then linked to that plant so per-plant history (Phase 6) can filter by it. An unattached
+ * scan can later be linked from the result screen ("Add to plant") to start tracking growth.
  */
 @HiltViewModel
 class ScanViewModel @Inject constructor(
@@ -59,14 +74,13 @@ class ScanViewModel @Inject constructor(
         viewModelScope.launch {
             _ui.value = UiState.Analyzing("Classifying leaf…")
             try {
+                // Fast path: one forward pass + suggestion + persist + navigate. History updates
+                // the instant saveScan inserts the row (Room's observe Flow fires on its own).
                 val diagnosis = withContext(io) { classifier.classify(bitmap) }
-                _ui.value = UiState.Analyzing("Generating explanation heatmap…")
-                val saliency = withContext(io) { saliencyGenerator.generate(bitmap) }
                 val suggestion = suggestionEngine.suggest(diagnosis.topLabel)
                 _ui.value = UiState.Analyzing("Saving scan…")
+                val sourcePath = withContext(io) { saveBitmap(bitmap, "source", Bitmap.CompressFormat.JPEG) }
                 val scanId = withContext(io) {
-                    val sourcePath = saveBitmap(bitmap, "source", Bitmap.CompressFormat.JPEG)
-                    val saliencyPath = saveBitmap(saliency, "saliency", Bitmap.CompressFormat.PNG)
                     scanRepository.saveScan(
                         ScanEntity(
                             plantId = plantId,
@@ -74,14 +88,40 @@ class ScanViewModel @Inject constructor(
                             labelCondition = diagnosis.topLabel.condition,
                             confidence = diagnosis.topConfidence,
                             sourceImagePath = sourcePath,
-                            saliencyImagePath = saliencyPath,
-                        )
+                            // Back-filled by the heatmap coroutine below once it finishes.
+                            saliencyImagePath = null,
+                        ),
                     )
                 }
-                holder.set(ScanResult(diagnosis, suggestion, saliency, bitmap))
+                // Publish WITHOUT the heatmap so the result screen renders the diagnosis at once;
+                // saliency is nullable and shown as a placeholder until updateSaliency streams it in.
+                holder.set(ScanResult(scanId, diagnosis, suggestion, bitmap, saliency = null))
                 _ui.value = UiState.Done(scanId)
+
+                // Slow path: occlusion heatmap, launched as a sibling on viewModelScope (a
+                // SupervisorJob child) so it is independent of the fast-path coroutine and survives
+                // navigation away from the scan screen (the scan back-stack entry stays alive).
+                // Failures are contained: Done is already emitted, so the scan is never stranded.
+                computeSaliencyInBackground(scanId, bitmap)
             } catch (e: Exception) {
                 _ui.value = UiState.Error(e.message ?: "Analysis failed.")
+            }
+        }
+    }
+
+    private fun computeSaliencyInBackground(scanId: Long, bitmap: Bitmap) {
+        viewModelScope.launch {
+            try {
+                val saliency = withContext(io) { saliencyGenerator.generate(bitmap) }
+                val saliencyPath = saveBitmap(saliency, "saliency", Bitmap.CompressFormat.PNG)
+                if (saliencyPath != null) {
+                    scanRepository.setSaliencyImage(scanId, saliencyPath)
+                }
+                holder.updateSaliency(scanId, saliency)
+            } catch (e: Exception) {
+                // Best-effort explainability: a heatmap failure must never break the scan. Done was
+                // already emitted; the result screen stays without a heatmap and the row keeps a
+                // null saliencyImagePath, which the Images gallery handles gracefully.
             }
         }
     }

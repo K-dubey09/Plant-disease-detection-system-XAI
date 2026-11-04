@@ -297,6 +297,52 @@ v1.0.0 release ships.
 
 ---
 
+## Phase 9 — Scan UX fix: instant results, streamed heatmap, growth tracking ✅
+
+A user-reported regression: after capturing/importing a leaf the scan page sat on a "scanning"
+spinner for a long time and sometimes never advanced. Root cause was that `ScanViewModel.analyze`
+ran the whole pipeline **serially** — classify → occlusion-sensitivity saliency (an 8×8 grid = 64
+extra TFLite forward passes, ~6–32 s on-device) → suggest → save → emit `Done(scanId)` — and the
+scan screen's `LaunchedEffect(ui)` only navigated to `result/{scanId}` on `Done`, so the result +
+history were gated on the slow heatmap. A heatmap failure (OOM / TFLite error) left `Done` un-emitted
+and the UI stranded on the Analyzing spinner indefinitely.
+
+- **Fast path + background heatmap.** `analyze` now does classify → suggest → save source image →
+  persist `ScanEntity` (with `saliencyImagePath = null`) → publish `ScanResult` to
+  `ScanResultHolder` → emit `Done(scanId)`, all on the single classify forward pass (a second or
+  two). The occlusion heatmap then runs in an **independent** `viewModelScope` coroutine (a
+  `SupervisorJob` sibling, so it survives navigation away from the scan screen) that, on success,
+  saves the heatmap bitmap, back-fills `saliencyImagePath` via the new
+  `ScanDao.updateSaliencyImagePath` / `ScanRepository.setSaliencyImage`, and streams the bitmap onto
+  the result screen via `ScanResultHolder.updateSaliency`. A heatmap exception is caught and
+  swallowed — the scan is already complete, so the failure is contained and never strands the UI.
+- **History updates at the same instant.** Because `saveScan` inserts the row before `Done`, Room's
+  observe `Flow` fires on its own and the History/Records/Records feeds update immediately — no
+  waiting on the heatmap.
+- **Streamed heatmap UI.** `ScanResult.saliency` is now nullable; the result screen's heatmap slot
+  renders a "Generating explanation…" `CircularProgressIndicator` placeholder while it is null, then
+  swaps to the bitmap when `updateSaliency` streams it in. `updateSaliency` is guarded by scan id so
+  a stale heatmap from a scan the user has since superseded cannot clobber the current result.
+- **"Add to plant" growth tracking.** The result screen gains an **Add to plant** action (the
+  `result_save_to_plant` / `result_save_new` strings that previously existed but were unwired). A
+  picker dialog lists the user's plants + a "Save as new plant" option (name + species); confirming
+  calls `ScanRepository.attachScanToPlant(scanId, plantId)` (new `ScanDao.updatePlantId`, a
+  `@Query UPDATE` — no schema change, no migration, DB stays at v3) or creates a plant then attaches.
+  The linked scan then appears in that plant's per-plant Records timeline, so each scan becomes a
+  tracked state in the plant's growth/health history.
+- **No schema change.** Both new DAO methods are `@Query UPDATE` on existing columns (`plantId`,
+  `saliencyImagePath`), so `LeafGuardDatabase` stays at version 3 with no migration — verified by the
+  existing `LeafGuardDatabaseMigrationTest` still passing.
+- **Tests.** +12 JVM tests (127 → **139**): `ScanViewModelTest` (Robolectric + MockK — proves
+  `Done` is emitted + the row persisted even when saliency throws, that a successful heatmap
+  streams onto the holder + back-fills its path, that `plantId` threads through, and that
+  `updateSaliency` drops a stale heatmap); `ScanRepositoryImplTest` (+4 — attach link/relink/unlink,
+  setSaliencyImage back-fill + Flow re-emit); `ResultViewModelTest` (+4 — attach to existing, unlink,
+  create-and-attach, reactive `attachedPlantId`). The Phase 8 Robolectric migration test still
+  passes (no regression). `assembleDebug` produces a 53 MB APK; `lintDebug` reports 0 errors.
+
+---
+
 ## Cross-cutting decisions
 
 - **No fake workflows:** a screen that is not implemented shows a `PhasePlaceholder` with its

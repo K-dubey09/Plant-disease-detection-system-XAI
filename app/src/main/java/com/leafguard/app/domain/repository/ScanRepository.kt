@@ -16,4 +16,10 @@ interface ScanRepository {
     suspend fun saveScan(scan: ScanEntity): Long
     suspend fun deleteScan(id: Long)
     suspend fun count(): Int
+
+    /** Phase 9: link a scan to a plant (plantId non-null) or unlink it (null) — for growth tracking. */
+    suspend fun attachScanToPlant(scanId: Long, plantId: Long?)
+
+    /** Phase 9: back-fill the saliency image path after the heatmap finishes in the background. */
+    suspend fun setSaliencyImage(scanId: Long, path: String?)
 }

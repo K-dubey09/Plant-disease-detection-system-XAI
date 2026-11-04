@@ -6,13 +6,21 @@ saliency heatmap.
 The user registers once with a 6-digit PIN, then tracks individual plants, scans leaves in real
 time, and builds a per-plant disease history with actionable treatment suggestions.
 
-> Status: **Phase 8 of 8 — complete (v1.0.0 production release).** All eight phases shipped: the
+> Status: **Phase 8 of 8 complete (v1.0.0 production release); Phase 9 scan-performance + growth-tracking fix applied.** All eight phases shipped: the
 > Room v2→v3 migration is now runtime-tested under Robolectric on the JVM (closes the prior #1 gap),
 > the PdfExporter record-line logic is unit-tested (closes #2), an accessibility audit passed with the
 > captured-leaf image described, an APK size audit confirmed 25.0 MB excluding the 112.5 MB model
-> (meets the <25 MB target), and a store listing is drafted. **127 JVM unit tests pass.** The signed
+> (meets the <25 MB target), and a store listing is drafted. **139 JVM unit tests pass.** The signed
 > release APK (v1 + v2 + v3 signing) is published to the **v1.0.0** GitHub Release as a raw `.apk` —
 > download and tap to install on Android 8.0+.
+>
+> **Phase 9 (scan UX fix):** the scan screen no longer waits on the slow 64-pass occlusion heatmap.
+> The diagnosis + suggestion now persist and the result screen appears immediately after the single
+> classify forward pass; the heatmap streams onto the result screen in the background (with a
+> "Generating explanation…" placeholder while it runs) and its image path is back-filled in Room. A
+> heatmap failure (OOM / TFLite error) is contained and never strands the scan — the result shows
+> without it. The result screen also gains an **"Add to plant"** action that links any scan to a
+> plant (existing or freshly created) so it joins that plant's per-plant Records growth timeline.
 > See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the full phased plan and the PDF
 > `LeafGuard_Project_Plan.pdf` (in the repo root after Phase 1) for the design rationale.
 
@@ -182,6 +190,15 @@ for the prediction. The overlay is shown beside the confidence so the diagnosis 
 core of trustworthy on-device disease detection. The trade-off vs. Grad-CAM is 64 extra forward
 passes per scan (acceptable on a 6 GB+ device; cached for the result screen).
 
+> **Phase 9 streaming (scan UX):** because those 64 passes take ~6–32 s on-device, the heatmap is
+> computed in an independent background coroutine after the diagnosis is shown. The result screen
+> appears immediately on the single classify pass with a "Generating explanation…" placeholder in the
+> heatmap slot; `ScanResultHolder.updateSaliency` streams the finished bitmap onto the screen when
+> ready (guarded by scan id so a stale heatmap from a superseded scan never clobbers the current
+> result), and the saliency image path is back-filled in Room via `ScanDao.updateSaliencyImagePath`.
+> A heatmap failure is caught and swallowed — the scan stays complete with a null heatmap rather than
+> stranding the UI on a spinner, which was the prior "stuck in scanning" regression.
+
 ---
 
 ## Testing strategy
@@ -193,8 +210,13 @@ passes per scan (acceptable on a 6 GB+ device; cached for the result screen).
   Records CSV generator + per-plant grouping + the PdfExporter record-line logic, the Images gallery
   grouping, the production `disease_suggestions.json` parsed end-to-end (org.json on the test
   classpath), and the Room v1→v2→v3 migration runtime-tested under Robolectric. (Truth assertions,
-  Mockk for collaborators, Turbine for Flow, Robolectric for the migration test). **127 tests pass.**
-  See `app/src/test/`.
+  Mockk for collaborators, Turbine for Flow, Robolectric for the migration test). Phase 9 adds a
+  Robolectric `ScanViewModelTest` that mocks the classifier/saliency generator to prove the scan
+  completes (`Done` emitted + row persisted) even when the heatmap throws, that a successful heatmap
+  streams onto the holder + back-fills its path, and that a stale heatmap from a superseded scan is
+  dropped; plus `ScanRepositoryImplTest` cases for `attachScanToPlant` (link / relink / unlink) and
+  `setSaliencyImage`, and a `ResultViewModelTest` for the "Add to plant" attach/create flows. **139
+  tests pass.** See `app/src/test/`.
 - **Instrumented:** Room DAOs against an in-memory database, Hilt-injected repositories, and
   Compose UI tests for the auth flow and scan→result navigation. See `app/src/androidTest/`.
 - **CI:** GitHub Actions runs `./gradlew assembleDebug assembleRelease test lint` on every push,
@@ -217,6 +239,7 @@ passes per scan (acceptable on a 6 GB+ device; cached for the result screen).
 | 6 | Dashboard stats, History feed, Images gallery, Records + CSV/PDF export | ✅ |
 | 7 | Treatment suggestions engine + per-disease knowledge base | ✅ |
 | 8 | Polish, full test pass, R8/release build, store readiness | ✅ |
+| 9 | Scan UX fix: result shows immediately, heatmap streams in background (never strands), "Add to plant" growth tracking | ✅ |
 
 See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the per-phase detail.
 
