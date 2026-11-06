@@ -15,6 +15,10 @@
     <!-- Optional: vibrate on scan result to confirm capture. -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Post a completion notification when a CSV/PDF export is saved to a user-picked location
+         (required at runtime on Android 13+, targetSdk 35). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:name=".LeafGuardApplication"
         android:allowBackup="false"

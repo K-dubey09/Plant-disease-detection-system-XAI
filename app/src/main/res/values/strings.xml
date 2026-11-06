@@ -159,6 +159,19 @@
     <string name="result_change_plant">Change plant</string>
     <string name="result_attached_to">Saved to %1$s</string>
 
+    <!-- v2.7.0.0: export notifications + plant-detail scan timeline -->
+    <string name="channel_exports_name">Exports</string>
+    <string name="channel_exports_desc">Notifications when a CSV or PDF export is saved.</string>
+    <string name="records_export_csv_done">CSV saved — open the notification to view it.</string>
+    <string name="records_export_pdf_done">PDF saved — open the notification to view it.</string>
+    <string name="records_export_pick_title">Save LeafGuard export</string>
+    <string name="plant_detail_scans_header">Checks</string>
+    <string name="plant_detail_scans_progress">%1$d scans · since %2$s · latest %3$s</string>
+    <string name="plant_detail_scans_progress_single">1 scan · %1$s</string>
+    <string name="plant_detail_scans_empty">No scans yet. Tap \"Scan this plant\" to start tracking this plant\'s health.</string>
+    <string name="plant_detail_scan_row">%1$s · %2$s · %3$s</string>
+    <string name="plant_detail_open_scan">Open scan</string>
+
     <!-- Assets -->
     <string name="asset_model" translatable="false">models/plant_disease.tflite</string>
     <string name="asset_labels" translatable="false">models/labels.txt</string>

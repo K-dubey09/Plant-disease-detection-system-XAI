@@ -51,6 +51,32 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `chore`, `ci`, `build`
 imperative ("add", not "added"), lowercase, ≤ 72 chars. The body explains *why* the change is
 needed when it is not obvious from the diff.
 
+## Changelog
+
+**Every change — application code, model, build, CI, or docs — MUST be recorded in
+[`CHANGELOG.md`](CHANGELOG.md).** A PR without a changelog entry is incomplete and will be held.
+
+Add the entry under the right version heading (a `[Unreleased]` section for not-yet-cut work, or
+the in-progress version section), grouped by `Added` / `Changed` / `Fixed` / `Removed` /
+`Security`. Each entry must state:
+
+- **Date and time** — `YYYY-MM-DD HH:MM` with the timezone. Get it from
+  `date -u '+%Y-%m-%d %H:%M UTC'`.
+- **Contributor name** — the author of the change (and the reviewer, if relevant).
+- **What changed and why** — one or two sentences; cite the file(s) where it lands.
+
+Example entry:
+
+```
+### Fixed
+- Export wrote to the private cache dir; now uses the Storage Access Framework so the user can
+  pick Downloads. (`RecordsScreen.kt`, `PdfExporter.kt`.)
+  — 2026-11-06 22:30 UTC, Kushagra Dubey
+```
+
+Model swaps additionally update `MODEL_CARD.md` and `DATASHEET.md` (see "Model and data changes"
+above); the changelog entry is the cross-reference, not a substitute.
+
 ## Code style
 
 - **Kotlin** per the official Android Kotlin style; the project uses a version catalog

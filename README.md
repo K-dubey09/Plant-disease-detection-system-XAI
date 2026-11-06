@@ -6,13 +6,13 @@ once with a 6-digit PIN, tracks individual plants, scans leaves in real time, an
 per-plant disease history with actionable, stage-aware treatment suggestions. No leaf ever leaves
 the device.
 
-> **Current: v2.6.0.0** — transparency & reproducibility release. The DINOv2 v3.5 primary classifier
-> (86.7% field / 99.3% lab / 96.1% mixed) is **unchanged**; new: an in-app **About** screen (version,
-> model SHA-256, model/code availability, AI-assisted-development disclosure), the seven public Kaggle
-> training notebooks (including the failed iterations), and updated docs. Build the signed release APK
-> with `./gradlew assembleRelease` (or via CI); the prior
-> [v2.5.1.0 APK](https://github.com/K-dubey09/Plant-disease-detection-system-XAI/releases/tag/v2.5.1.0)
-> remains on the Releases page until v2.6.0.0 is cut. CI is green on `main`.
+> **Current: v2.7.0.0** — reliability + export release. The DINOv2 v3.5 primary classifier
+> (86.7% field / 99.3% lab / 96.1% mixed) is **unchanged**; new: a per-plant scan timeline on Plant
+> detail (the "Checks", recent-to-last, with a progress summary), CSV/PDF export via the Storage
+> Access Framework (the user picks Downloads) with a completion notification, an About screen that
+> reads version + SHA from code, and a maintained [`CHANGELOG.md`](CHANGELOG.md). Build the signed
+> release APK with `./gradlew assembleRelease` (or via CI); install over v2.6.0.0 — same release
+> keystore. CI is green on `main`.
 
 ---
 
@@ -25,6 +25,7 @@ the device.
 | **v2.5.0.0** | **DINOv2 ViT-S/14 v3.5 (TFLite, 3-view TTA)** | **86.7%** | **99.3%** | **96.1%** | **86.8 MB, committed** |
 | **v2.5.1.0** | DINOv2 v3.5 (unchanged) + result-screen UX | **86.7%** | **99.3%** | **96.1%** | **86.8 MB, committed** |
 | **v2.6.0.0** | DINOv2 v3.5 (unchanged) + About screen + disclosures | **86.7%** | **99.3%** | **96.1%** | **86.8 MB, committed** |
+| **v2.7.0.0** | DINOv2 v3.5 (unchanged) + per-plant timeline + SAF export | **86.7%** | **99.3%** | **96.1%** | **86.8 MB, committed** |
 
 The v2.5 line closes the PlantVillage→field domain gap that capped earlier models, and ships the
 model **committed in the repo** (under GitHub's 100 MB limit) so every checkout builds the real
@@ -103,17 +104,16 @@ is committed in `app/src/main/assets/models/` — no Kaggle pull needed.
 
 ## Install the release APK
 
-1. Open the repository's **Releases** page. The
-   [v2.5.1.0 release](https://github.com/K-dubey09/Plant-disease-detection-system-XAI/releases/tag/v2.5.1.0)
-   APK (~112 MB) is available now; the v2.6.0.0 APK will be posted there once cut (build it locally
-   with `./gradlew assembleRelease` in the meantime).
-2. Download `LeafGuard-v2.5.1.0-release.apk` (~112 MB) directly, or the v2.6.0.0 APK when posted.
-3. On the device (Android 8.0+), tap the downloaded `.apk` and allow **Install unknown apps** for
-   your browser/files app, then confirm.
-4. First launch opens the Register screen.
+1. Open the repository's **Releases** page and download the
+   [v2.7.0.0 release](https://github.com/K-dubey09/Plant-disease-detection-system-XAI/releases/tag/v2.7.0.0)
+   APK (~112 MB) — `LeafGuard-v2.7.0.0-release.apk`.
+2. On the device (Android 8.0+), tap the downloaded `.apk` and allow **Install unknown apps** for
+   your browser/files app, then confirm. **Install over v2.5.1.0 / v2.6.0.0** — same release
+   keystore, so your scans and plants carry over (uninstalling would erase them).
+3. First launch opens the Register screen.
 
 The APK is signed with **v1 + v2 + v3** schemes (forced in `build.gradle.kts`; the CI
-`Verify release APK is signed` step asserts v1 + v2). Install over v2.5.0.0 — same release keystore.
+`Verify release APK is signed` step asserts v1 + v2).
 
 ---
 
@@ -229,6 +229,17 @@ AI-generated.
 
 ## Changelog
 
+The full, dated history lives in [`CHANGELOG.md`](CHANGELOG.md) (every change recorded with date,
+time, and contributor). Summary:
+
+- **v2.7.0.0** — Reliability + export release. DINOv2 model **unchanged**. Plant detail now lists
+  that plant's scans (recent-to-last) with a progress summary + tap-to-open; CSV/PDF export writes
+  to a user-picked location via the Storage Access Framework (Downloads) and posts a completion
+  notification (`POST_NOTIFICATIONS`); the About screen reads version + SHA from `BuildConfig` /
+  `ModelIntegrity`; camera capture scratch file cleaned up; stale Phase-1 comments corrected.
+  `versionCode` 11 → 12. **Scan-history persistence was already correct in source** (every
+  classification calls `saveScan` into a persistent Room file); if you saw history vanish on close,
+  you were on a pre-Phase-9 build — install v2.7.0.0.
 - **v2.6.0.0** — Transparency & reproducibility release. DINOv2 model **unchanged** (86.7% field).
   New in-app **About** screen (version, model SHA-256 prefix, model/code availability,
   AI-assisted-development disclosure); seven public Kaggle training notebooks (including the failed

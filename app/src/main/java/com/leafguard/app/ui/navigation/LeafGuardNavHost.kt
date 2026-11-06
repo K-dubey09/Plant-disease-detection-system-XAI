@@ -174,6 +174,7 @@ fun LeafGuardNavHost(
                 PlantDetailScreen(
                     plantId = entry.arguments?.getLong("plantId") ?: -1L,
                     onScanForPlant = { id -> navController.navigate(Routes.scanForPlant(id)) },
+                    onOpenScan = { scanId -> navController.navigate(Routes.result(scanId)) },
                     onBack = { navController.popBackStack() },
                 )
             }

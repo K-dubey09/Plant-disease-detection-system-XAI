@@ -24,8 +24,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
-        // Keep splash onscreen until the navigation graph decides the start destination.
-        // The condition is satisfied immediately in Phase 1; real auth checks arrive in Phase 2.
+        // The start destination is chosen synchronously from the auth state inside LeafGuardNavHost
+        // (routeFor(authState.value)), so the splash has nothing to gate: release it at once and let
+        // the first frame compose.
         splash.setKeepOnScreenCondition { false }
         enableEdgeToEdge()
         setContent {

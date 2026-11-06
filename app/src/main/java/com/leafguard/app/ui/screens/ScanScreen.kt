@@ -277,6 +277,9 @@ private fun capturePhoto(
         object : ImageCapture.OnImageSavedCallback {
             override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                 val bmp = BitmapFactory.decodeFile(file.absolutePath)
+                // The cache file was only a scratch carrier for the decode; the bitmap is staged
+                // in memory for analysis, so delete it now instead of leaking one .jpg per capture.
+                file.delete()
                 if (bmp != null) onCaptured(bmp)
             }
 

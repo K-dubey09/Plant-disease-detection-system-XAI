@@ -7,7 +7,7 @@ model the project currently assumes.
 ## Supported versions
 
 Only the latest release on `main` is supported with security fixes. The current release is
-**v2.6.0.0** (`versionCode` 11); older tagged releases (v2.5.x, v2.0.0.0, v1.5.0.0) are
+**v2.7.0.0** (`versionCode` 12); older tagged releases (v2.6.0.0, v2.5.x, v2.0.0.0, v1.5.0.0) are
 superseded and will not receive backports.
 
 ## Reporting a vulnerability

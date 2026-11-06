@@ -19,12 +19,13 @@ android {
         // adaptive-icon + splash-screen pipeline clean and avoids legacy raster fallbacks.
         minSdk = 26
         targetSdk = 35
-        // v2.5.1.0: result-screen UX + model transparency on top of the v2.5.0.0 DINOv2 v3.5 primary
-        // (3-view TTA, unchanged). Result screen gains a model-info card, a model-integrity banner
-        // (wired from ModelIntegrity -- was computed but never shown), a qualitative confidence tier
-        // (High/Moderate/Low), and per-alternative mini bars. README rewritten for v2.5.x.
-        versionCode = 11
-        versionName = "2.6.0.0"
+        // v2.7.0.0: app reliability + export release. DINOv2 model unchanged. Plant detail now lists
+        // that plant's scans (recent-to-last) with a progress summary + tap-to-open; CSV/PDF export
+        // writes to a user-picked location via the Storage Access Framework and posts a completion
+        // notification (POST_NOTIFICATIONS); About screen reads version + SHA from BuildConfig /
+        // ModelIntegrity instead of hardcoded literals; camera capture scratch file is cleaned up.
+        versionCode = 12
+        versionName = "2.7.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

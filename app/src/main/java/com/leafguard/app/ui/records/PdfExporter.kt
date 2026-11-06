@@ -7,6 +7,7 @@ import android.graphics.pdf.PdfDocument
 import com.leafguard.app.data.local.ScanEntity
 import java.io.File
 import java.io.FileOutputStream
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -14,12 +15,17 @@ import java.util.Locale
 /**
  * On-device PDF export of the per-plant disease log (Phase 6 Records). Renders an A4 document with
  * a title, a generation timestamp, and one row per scan (date, plant, condition, confidence),
- * paginating when the cursor runs off the page. Writes to the app cache dir and returns the file.
+ * paginating when the cursor runs off the page.
  *
- * This uses the Android framework [PdfDocument] / [Paint], so it is not exercisable in a JVM unit
- * test (no Android graphics on the host); it is compiled + lint-checked by CI and exercised at
- * runtime. The CSV layout -- the structured, parseable export -- is the unit-tested path via
- * [CsvGenerator].
+ * [writeTo] streams the document into any [OutputStream] -- the canonical path used by the Records
+ * screen, which writes to a user-picked location via the Storage Access Framework
+ * (`ActivityResultContracts.CreateDocument`). [export] is retained as a cache-dir convenience that
+ * returns a [File], and is now a thin wrapper over [writeTo].
+ *
+ * This uses the Android framework [PdfDocument] / [Paint], so [writeTo] / [export] are not exercisable
+ * in a JVM unit test (no Android graphics on the host); they are compiled + lint-checked by CI and
+ * exercised at runtime. The CSV layout -- the structured, parseable export -- is the unit-tested path
+ * via [CsvGenerator]. [formatRecordLine] and [displayName] are pure and unit-tested.
  */
 object PdfExporter {
 
@@ -31,7 +37,8 @@ object PdfExporter {
 
     private val DATE_FMT = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
-    fun export(context: Context, scans: List<ScanEntity>, plantNames: Map<Long, String>): File {
+    /** Streams the records PDF into [out]. The caller owns the stream lifecycle (e.g. `.use { ... }`). */
+    fun writeTo(out: OutputStream, scans: List<ScanEntity>, plantNames: Map<Long, String>) {
         val doc = PdfDocument()
         try {
             val title = Paint().apply {
@@ -61,13 +68,17 @@ object PdfExporter {
                 y += LINE_H
             }
             doc.finishPage(page)
-
-            val file = File(context.cacheDir, "leafguard_records_${System.currentTimeMillis()}.pdf")
-            FileOutputStream(file).use { out -> doc.writeTo(out) }
-            return file
+            doc.writeTo(out)
         } finally {
             doc.close()
         }
+    }
+
+    /** Writes the records PDF to the app cache dir and returns the file. */
+    fun export(context: Context, scans: List<ScanEntity>, plantNames: Map<Long, String>): File {
+        val file = File(context.cacheDir, "leafguard_records_${System.currentTimeMillis()}.pdf")
+        FileOutputStream(file).use { writeTo(it, scans, plantNames) }
+        return file
     }
 
     /** The formatted single-line record for a scan (date, plant, condition, confidence %). */

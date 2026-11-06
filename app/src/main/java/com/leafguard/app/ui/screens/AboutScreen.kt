@@ -15,18 +15,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.leafguard.app.BuildConfig
+import com.leafguard.app.data.inference.ModelIntegrity
 import com.leafguard.app.ui.components.LeafScaffold
 
 /**
- * About (v2.6.0.0). A read-only transparency screen: application version and build, the shipped
- * model's SHA-256 digest prefix (so the on-device asset can be verified against the repository),
- * a model-and-code availability note linking the public GitHub repository and the Kaggle notebook
- * collection, and the AI-assisted-development disclosure. The screen is static: it adds no
- * data-layer or domain-layer types and does not touch the inference path, so the model, the
- * integrity guard, and the occlusion heatmap behave exactly as in 2.5.1.0.
+ * About (v2.6.0.0; v2.7.0.0 reads version + digest from code instead of hardcoded literals). A
+ * read-only transparency screen: application version and build, the shipped model's SHA-256 digest
+ * prefix (so the on-device asset can be verified against the repository), a model-and-code
+ * availability note linking the public GitHub repository and the Kaggle notebook collection, and the
+ * AI-assisted-development disclosure. The screen is static: it adds no data-layer or domain-layer
+ * types and does not touch the inference path, so the model, the integrity guard, and the occlusion
+ * heatmap behave exactly as in 2.6.0.0.
  */
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
+    // Read from code so the screen never drifts from a version bump or a model swap.
+    val versionLine = "LeafGuard ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})\n" +
+        "Explainable on-device plant disease detection."
+    val shaPrefix = ModelIntegrity.EXPECTED_SHA256.take(8)
+
     LeafScaffold(title = "About LeafGuard", onBack = onBack) { padding ->
         Column(
             modifier = Modifier
@@ -37,16 +45,13 @@ fun AboutScreen(onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             AboutSection(title = "Version") {
-                Text(
-                    "LeafGuard 2.6.0.0 (build 11)\nExplainable on-device plant disease detection.",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                Text(versionLine, style = MaterialTheme.typography.bodyMedium)
             }
             AboutSection(title = "On-device model") {
                 Text(
                     "DINOv2 ViT-S/14 with a domain-adversarial head, converted to an 86.8 MB " +
                         "TensorFlow Lite graph that runs entirely on-device. SHA-256 digest " +
-                        "prefix: 3660cfdb... Verify this against the pinned value in " +
+                        "prefix: $shaPrefix... Verify this against the pinned value in " +
                         "ModelIntegrity.kt before trusting a downloaded copy.",
                     style = MaterialTheme.typography.bodyMedium,
                 )

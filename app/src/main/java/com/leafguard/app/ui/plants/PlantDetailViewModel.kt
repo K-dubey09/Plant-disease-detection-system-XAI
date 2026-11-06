@@ -4,7 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafguard.app.data.local.Plant
+import com.leafguard.app.data.local.ScanEntity
 import com.leafguard.app.domain.repository.PlantRepository
+import com.leafguard.app.domain.repository.ScanRepository
 import com.leafguard.app.ui.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,12 +19,16 @@ import javax.inject.Inject
 
 /**
  * Drives the plant detail screen. Reads `plantId` from the nav [SavedStateHandle], observes the
- * plant, and supports editing name/species/notes + deletion.
+ * plant, and supports editing name/species/notes + deletion. As of v2.7.0.0 it also exposes the
+ * plant's scan timeline ([scans]) via [ScanRepository.observeScansForPlant] so the detail screen can
+ * render that plant's checks in recent-to-last order alongside a progress summary; tapping a check
+ * opens the full result screen for that scan.
  */
 @HiltViewModel
 class PlantDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val plantRepository: PlantRepository,
+    private val scanRepository: ScanRepository,
 ) : ViewModel() {
 
     // Routes.PLANT_DETAIL declares a Long "plantId" arg; Hilt's SavedStateHandle carries it.
@@ -30,6 +36,10 @@ class PlantDetailViewModel @Inject constructor(
 
     val plant: StateFlow<Plant?> = plantRepository.observePlant(plantId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** This plant's scans, newest-first (the DAO returns `ORDER BY createdAt DESC`). */
+    val scans: StateFlow<List<ScanEntity>> = scanRepository.observeScansForPlant(plantId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _savedTick = MutableStateFlow(0L)
     val savedTick: StateFlow<Long> = _savedTick.asStateFlow()
