@@ -19,12 +19,12 @@ android {
         // adaptive-icon + splash-screen pipeline clean and avoids legacy raster fallbacks.
         minSdk = 26
         targetSdk = 35
-        // v2.5.0.0: DINOv2 ViT-S/14 fine-tune v3.5.0.0 becomes the PRIMARY classifier (TFLite,
-        // 3-view TTA: orig + hflip + scale0.875). Field 86.7% / lab 99.3% / mixed 96.1% (v2.0.0.0
-        // Swin-ONNX was 67.3% / 99.3% / 94.5%). Retires the ORT v3 path; ships the committed
-        // 86.8 MB DINOv2 TFLite (same [1,224,224,3] [0,1] -> [38] contract as the prior Swin asset).
-        versionCode = 9
-        versionName = "2.5.0.0"
+        // v2.5.1.0: result-screen UX + model transparency on top of the v2.5.0.0 DINOv2 v3.5 primary
+        // (3-view TTA, unchanged). Result screen gains a model-info card, a model-integrity banner
+        // (wired from ModelIntegrity -- was computed but never shown), a qualitative confidence tier
+        // (High/Moderate/Low), and per-alternative mini bars. README rewritten for v2.5.x.
+        versionCode = 10
+        versionName = "2.5.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

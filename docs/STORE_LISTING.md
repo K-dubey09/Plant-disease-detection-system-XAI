@@ -1,4 +1,4 @@
-# LeafGuard - Store Listing (v1.0.0)
+# LeafGuard - Store Listing (v2.5.1.0)
 
 Material for a Google Play / app-store listing. All copy is English (en); the UI string table
 (`app/src/main/res/values/strings.xml`) is structured for translation as a follow-up.
@@ -15,7 +15,8 @@ On-device plant disease diagnosis with AI explainability - 38 crops, no cloud.
 
 LeafGuard turns your phone's camera into an on-device plant pathologist. Point it at a leaf and it
 classifies the condition across 38 PlantVillage crop classes - apple, tomato, potato, corn, grape,
-pepper, strawberry and more - using a trained Swin-Tiny vision transformer that runs entirely on the
+pepper, strawberry and more - using a trained DINOv2 ViT-S/14 vision transformer (3-view
+test-time augmentation) that runs entirely on the
 device (no photo ever leaves your phone). Every diagnosis comes with a severity tier, stage-aware
 treatment steps (immediate, short-term, long-term) and a prevention checklist, plus an
 occlusion-sensitivity heatmap that shows which regions of the leaf drove the prediction - so you can
@@ -33,9 +34,10 @@ Built for gardeners, smallholders and students:
   salted, Keystore-backed derived key). All scans, plants and images stay on-device in a local Room
   database - there is no account, no server, no telemetry.
 
-Model accuracy: 98.59% on the PlantVillage validation split. Advisory treatment content is general
-integrated-pest-management guidance, not a prescription - always confirm rates and products against
-your local extension service before treatment.
+Model accuracy: 86.7% field / 99.3% lab / 96.1% mixed (DINOv2 v3.5, with TTA). The model is
+committed in the APK and verified by a SHA-256 integrity guard at runtime. Advisory treatment
+content is general integrated-pest-management guidance, not a prescription - always confirm rates
+and products against your local extension service before treatment.
 
 ## Category
 
@@ -65,17 +67,17 @@ images, plant records and diagnosis history live in a local Room database and in
 your device; uninstalling the app removes all of it. The only outbound network use is the build-time
 CI pull of the trained model from a private Kaggle dataset (that happens in CI, never on your phone).
 
-## APK size (v1.0.0)
+## APK size (v2.5.1.0)
 
-- Total: ~137 MB (signed release, R8 minified + resource-shrunk).
-- Trained model (`assets/models/plant_disease.tflite`): 112.5 MB (the Swin-Tiny 38-class head,
-  FP32).
-- App + dependencies excl. model: **25.0 MB** (meets the < 25 MB target). Of that, ~20 MB is the
+- Total: ~112 MB (signed release, R8 minified + resource-shrunk).
+- Trained model (`assets/models/plant_disease.tflite`): 86.8 MB (the DINOv2 ViT-S/14 v3.5 38-class
+  head, FP32; committed under GitHub's 100 MB file limit).
+- App + dependencies excl. model: ~25 MB. Of that, ~20 MB is the
   TFLite native runtime shipped for all four ABIs (arm64-v8a, armeabi-v7a, x86, x86_64);
-  `classes.dex` is 1.7 MB and `res/` is 0.1 MB after shrinking.
-- Future size win (not in v1.0.0): per-ABI APK splits would ship only the one matching native
-  runtime per install, cutting ~20 MB of redundant native libs to ~5 MB. A quantized (INT8) model
-  variant (~11 MB) is a separate future option for size-constrained devices.
+  `classes.dex` is ~1.7 MB and `res/` is ~0.1 MB after shrinking.
+- Future size win: per-ABI APK splits would ship only the one matching native runtime per install,
+  cutting ~20 MB of redundant native libs to ~5 MB. An INT8 quantized DINOv2 variant is a separate
+  future option for size-constrained devices.
 
 ## Signing
 
@@ -85,7 +87,7 @@ release build.
 
 ## Release asset
 
-`LeafGuard-v1.0.0-release.apk` on the GitHub Release tagged `v1.0.0` - a raw `.apk` download
+`LeafGuard-v2.5.1.0-release.apk` on the GitHub Release tagged `v2.5.1.0` - a raw `.apk` download
 (no zip wrapping). Download and tap to install.
 
 ## Screenshots (capture targets)

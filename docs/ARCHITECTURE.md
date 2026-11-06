@@ -32,7 +32,7 @@
 | `AuthViewModel` / `PinStore` | UI / Data | 2 | Register, PIN login, Keystore-backed storage |
 | `LeafGuardDatabase` (Plant), `PlantDao`, `PlantRepository` | Data | 3 | Plants CRUD; single source of truth, Flow-based |
 | `ScanEntity`, `ScanDao`, `ScanRepository` | Data | 5/6 | Persisted scans; nullable plant FK (ON DELETE SET NULL); v3 adds `sourceImagePath`/`saliencyImagePath` for the gallery; v1→v2→v3 migrations |
-| `DiseaseClassifier` | Data | 4 | Load Swin-Tiny model, preprocess 224×224, run inference (softmax baked in) |
+| `DiseaseClassifier` | Data | 4 | DINOv2 v3.5 primary classifier: preprocess 224×224, run inference (softmax baked in), 3-view TTA (orig + hflip + scale0.875) on the headline path; single-pass `classifyForSaliency` for the heatmap |
 | `SaliencyGenerator` | Data | 4 | Occlusion-sensitivity heatmap (model-agnostic; TFLite exposes no conv gradients) |
 | `ScanViewModel` + CameraX (`PreviewView`/`ImageCapture`) | UI | 5/6 | Live capture → classify → saliency → save bitmaps to `filesDir/scans/` → persist `ScanEntity` (with image paths) → navigate `result/{scanId}` |
 | `DashboardViewModel` | UI | 6 | Live scan + plant lists → stats (counts, most-recent diagnosis) |
@@ -71,7 +71,7 @@ bottom-nav graph. Gating is implemented in Phase 2 via an auth-state `StateFlow`
 
 ## Memory budget (6 GB target)
 
-- TFLite interpreter footprint: ~120–180 MB resident (the 112 MB Swin-Tiny FP32 model + the
+- TFLite interpreter footprint: ~100–160 MB resident (the 86.8 MB DINOv2 v3.5 FP32 model + the
   224×224 activation buffers and the occlusion grid's per-cell re-inference). This is why the
   app targets 6 GB+ RAM devices; a smaller float16/INT8 variant is feasible but not built yet.
 - CameraX preview: ImageAnalysis with `STRATEGY_KEEP_ONLY_LATEST` and `BACKPRESSURE` — one

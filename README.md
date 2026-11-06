@@ -1,28 +1,30 @@
 # LeafGuard — Explainable Plant Disease Detection for Android
 
-LeafGuard is a production-targeted Android app that diagnoses plant leaf diseases **on-device**
-with a TensorFlow Lite model and explains every prediction with an **occlusion-sensitivity**
-saliency heatmap.
-The user registers once with a 6-digit PIN, then tracks individual plants, scans leaves in real
-time, and builds a per-plant disease history with actionable treatment suggestions.
+LeafGuard diagnoses plant leaf diseases **on-device** with a DINOv2 ViT-S/14 transformer and
+explains every prediction with an **occlusion-sensitivity** saliency heatmap. The user registers
+once with a 6-digit PIN, tracks individual plants, scans leaves in real time, and builds a
+per-plant disease history with actionable, stage-aware treatment suggestions. No leaf ever leaves
+the device.
 
-> Status: **Phase 8 of 8 complete (v1.0.0 production release); Phase 9 scan-performance + growth-tracking fix applied.** All eight phases shipped: the
-> Room v2→v3 migration is now runtime-tested under Robolectric on the JVM (closes the prior #1 gap),
-> the PdfExporter record-line logic is unit-tested (closes #2), an accessibility audit passed with the
-> captured-leaf image described, an APK size audit confirmed 25.0 MB excluding the 112.5 MB model
-> (meets the <25 MB target), and a store listing is drafted. **139 JVM unit tests pass.** The signed
-> release APK (v1 + v2 + v3 signing) is published to the **v1.0.0** GitHub Release as a raw `.apk` —
-> download and tap to install on Android 8.0+.
->
-> **Phase 9 (scan UX fix):** the scan screen no longer waits on the slow 64-pass occlusion heatmap.
-> The diagnosis + suggestion now persist and the result screen appears immediately after the single
-> classify forward pass; the heatmap streams onto the result screen in the background (with a
-> "Generating explanation…" placeholder while it runs) and its image path is back-filled in Room. A
-> heatmap failure (OOM / TFLite error) is contained and never strands the scan — the result shows
-> without it. The result screen also gains an **"Add to plant"** action that links any scan to a
-> plant (existing or freshly created) so it joins that plant's per-plant Records growth timeline.
-> See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the full phased plan and the PDF
-> `LeafGuard_Project_Plan.pdf` (in the repo root after Phase 1) for the design rationale.
+> **Current: v2.5.1.0** — DINOv2 v3.5 primary classifier (86.7% field / 99.3% lab / 96.1% mixed)
+> with 3-view test-time augmentation. The signed release APK is on the
+> [v2.5.1.0 GitHub Release](https://github.com/K-dubey09/Plant-disease-detection-system-XAI/releases/tag/v2.5.1.0)
+> as a raw `.apk` — download and tap to install on Android 8.0+. CI is green on `main`.
+
+---
+
+## Model accuracy across releases
+
+| Release | Primary model | Field | Lab | Mixed | On-device? |
+| --- | --- | ---: | ---: | ---: | --- |
+| v1.5.0.0 | JK-TK YOLOv11 detector (116 cls) | — | — | — | 228 MB, not bundled |
+| v2.0.0.0 | Swin-Tiny ONNX (ImageNet base) via ORT | 67.3% | 99.3% | 94.5% | 107 MB, .gitignore'd (broke fresh builds) |
+| **v2.5.0.0** | **DINOv2 ViT-S/14 v3.5 (TFLite, 3-view TTA)** | **86.7%** | **99.3%** | **96.1%** | **86.8 MB, committed** |
+| **v2.5.1.0** | DINOv2 v3.5 (unchanged) + result-screen UX | **86.7%** | **99.3%** | **96.1%** | **86.8 MB, committed** |
+
+The v2.5 line closes the PlantVillage→field domain gap that capped earlier models, and ships the
+model **committed in the repo** (under GitHub's 100 MB limit) so every checkout builds the real
+classifier — no Kaggle pull, no missing-asset landmine.
 
 ---
 
@@ -31,10 +33,11 @@ time, and builds a per-plant disease history with actionable treatment suggestio
 | Constraint | Decision |
 | --- | --- |
 | Android, 6 GB+ RAM target | Native Kotlin + Jetpack Compose; `minSdk = 26` (Android 8.0 covers every 6 GB+ device) |
-| Model runs offline, 6 GB+ RAM target | Swin-Tiny transformer (patch4-window7-224, 38 PlantVillage classes, **98.59% validation accuracy**) converted PyTorch→ONNX→TFLite (~112 MB FP32). Source: HuggingFace `surgeonwz/plant-village` (apache-2.0); the trained `.tflite` is pulled from a private Kaggle dataset by CI on every build |
-| Explainable AI | Occlusion-sensitivity heatmap (model-agnostic — TFLite's `Interpreter` exposes no conv activations/gradients, so true Grad-CAM is unavailable on-device): an 8×8 grid is greyed cell-by-cell and the predicted class's confidence drop per cell becomes the jet-colormap overlay on the captured leaf |
-| First-launch register, PIN login after | PIN stored in `EncryptedSharedPreferences` keyed to the Android Keystore; biometric fallback optional |
-| Production, not prototype | MVVM + Clean Architecture, Hilt DI, Room persistence, CameraX, type-safe navigation, unit + instrumented tests, R8 minification, CI |
+| Best field accuracy on-device | DINOv2 ViT-S/14 (self-supervised ImageNet base → fine-tuned on PlantVillage + field-augmented data) exported to TFLite FP32. 3-view TTA (orig + hflip + scale0.875) on the headline path replicates the eval recipe, so on-device field accuracy tracks the validated 86.7%. |
+| Trust the model output | ModelIntegrity SHA-256-guards the exact `.tflite` bytes the Interpreter executes; the result screen surfaces a banner if the buffer was modified after signing. A model-info card states which model + TTA produced each diagnosis. |
+| Explainable AI | Occlusion-sensitivity heatmap (model-agnostic — TFLite's `Interpreter` exposes no conv activations/gradients, so true Grad-CAM is unavailable on-device): an 8×8 grid is greyed cell-by-cell and the predicted class's confidence drop per cell becomes the jet-colormap overlay on the captured leaf. |
+| First-launch register, PIN login after | PIN stored in `EncryptedSharedPreferences` keyed to the Android Keystore |
+| Production, not prototype | MVVM + Clean Architecture, Hilt DI, Room persistence, CameraX, type-safe navigation, unit tests, R8 minification, CI |
 
 ---
 
@@ -54,44 +57,19 @@ time, and builds a per-plant disease history with actionable treatment suggestio
 
 ---
 
-## Project structure
+## Features
 
-```
-.
-├── app/
-│   ├── build.gradle.kts
-│   ├── proguard-rules.pro
-│   └── src/
-│       ├── main/
-│       │   ├── AndroidManifest.xml
-│       │   ├── java/com/leafguard/app/
-│       │   │   ├── LeafGuardApplication.kt      # @HiltAndroidApp entry point
-│       │   │   ├── MainActivity.kt              # single-activity host + splash
-│       │   │   ├── ui/
-│       │   │   │   ├── theme/                    # Color, Theme, Type (Material 3)
-│       │   │   │   ├── navigation/               # Routes, TopDestination, LeafGuardNavHost
-│       │   │   │   ├── components/               # LeafScaffold, PhasePlaceholder
-│       │   │   │   └── screens/                  # Auth, Dashboard, Plants, PlantDetail,
-│       │   │   │                                 #   Scan, Result, History, Images, Records
-│       │   │   ├── data/  (Phase 2–3)            # Room entities, DAOs, repositories
-│       │   │   ├── domain/ (Phase 3–7)           # use-cases, model abstractions
-│       │   │   └── di/ (Phase 2+)               # Hilt modules
-│       │   └── res/                              # strings, colors, themes, icons, backup XML
-│       ├── test/                                  # JVM unit tests (Truth, Mockk, Turbine)
-│       └── androidTest/                           # instrumented tests (Espresso, Compose test)
-├── gradle/
-│   ├── libs.versions.toml                        # central version catalog
-│   └── wrapper/                                  # gradle-wrapper.jar + properties
-├── docs/
-│   ├── ARCHITECTURE.md
-│   └── ROADMAP.md
-├── .github/workflows/android.yml                 # CI: build + unit test
-├── settings.gradle.kts
-├── build.gradle.kts
-├── gradle.properties
-├── gradlew / gradlew.bat
-└── .gitignore
-```
+- **Scan** — CameraX live capture or gallery pick; a single DINOv2 forward pass (3-view TTA) returns
+  the diagnosis immediately; the occlusion heatmap streams in afterward.
+- **Result** — headline condition + a qualitative confidence tier (High / Moderate / Low) + a model
+  info card (DINOv2 v3.5 · 3-view TTA) + a model-integrity banner when the SHA mismatches + the
+  source/heatmap pair + top-3 alternatives with mini bars + stage-aware treatment + prevention +
+  "Add to plant".
+- **Plants & growth tracking** — track individual plants; link any scan to a plant so it joins that
+  plant's per-plant Records timeline.
+- **History** — every scan persisted in Room; tap to re-open the result.
+- **Records** — export a plant's history to CSV / PDF.
+- **Dashboard** — at-a-glance stats.
 
 ---
 
@@ -99,155 +77,106 @@ time, and builds a per-plant disease history with actionable treatment suggestio
 
 Requires Android Studio Koala/Ladybug (or later) and JDK 17.
 
-1. Clone and open the project root in Android Studio. It will sync the Gradle wrapper
-   (Gradle 8.9) and download the AGP/Compose/Hilt plugins.
+1. Clone and open the project root in Android Studio. It syncs the Gradle wrapper (Gradle 8.9).
 2. Let Android Studio install **Android SDK Platform 35** and **Build-Tools 35.x** if prompted.
-3. Select a device or emulator running **API 26+** (the 6 GB+ RAM target).
-4. Run the `app` configuration. Phase 1 boots into the Register screen; the bottom navigation
-   between Dashboard / Plants / Scan / History / Records is fully wired, and every screen
-   honestly reports the phase in which its real content ships.
+3. Select a device or emulator running **API 26+**.
+4. Run the `app` configuration.
 
-Command-line build (once the Android SDK is installed and `local.properties` points at it):
+Command-line (Android SDK installed and `local.properties` pointing at it):
 
 ```bash
 ./gradlew assembleDebug          # build the debug APK
-./gradlew test                   # run JVM unit tests
-./gradlew connectedAndroidTest   # instrumented tests (device/emulator needed)
-./gradlew lint                   # Android Lint
+./gradlew assembleRelease        # build the signed release APK (needs KEYSTORE_* env vars)
+./gradlew test                   # JVM unit tests
+./gradlew lintDebug              # Android Lint
 ```
+
+`settings.gradle.kts` puts the Tencent + Huawei public Maven mirrors first, so the build resolves
+dependencies even when Maven Central rate-limits (429). The 86.8 MB DINOv2 `plant_disease.tflite`
+is committed in `app/src/main/assets/models/` — no Kaggle pull needed.
 
 ---
 
 ## Install the release APK
 
-The signed release APK is published as a **GitHub Release asset** — a raw `.apk` with no
-artifact-ZIP to extract — on every green build of `main`:
-
-1. Open the repository's **Releases** page and pick the latest `v0.4.0` release.
-2. Download `LeafGuard-v0.4.0-release.apk` (~137 MB) directly.
+1. Open the repository's **Releases** page and pick the
+   [v2.5.1.0 release](https://github.com/K-dubey09/Plant-disease-detection-system-XAI/releases/tag/v2.5.1.0).
+2. Download `LeafGuard-v2.5.1.0-release.apk` (~112 MB) directly.
 3. On the device (Android 8.0+), tap the downloaded `.apk` and allow **Install unknown apps** for
-   your browser/files app when prompted, then confirm the install.
+   your browser/files app, then confirm.
 4. First launch opens the Register screen.
 
-The APK is signed with **v1 + v2 + v3** APK signature schemes. The v1 (JAR) signature is the one
-every Android installer understands — AGP 8.x omits v1 by default once `minSdk ≥ 24`, leaving a
-v2-only APK that some OEM package installers reject with "There was a problem parsing the package";
-`build.gradle.kts` forces all three schemes, and the CI `Verify release APK is signed` step asserts
-v1 + v2 are present. `minSdk = 26` (Android 8.0) is intentional — the trained Swin-Tiny model
-targets 6 GB+ RAM devices, all of which ship with Android 8+.
-
-If you are testing a pull-request build (no Release asset), download the `leafguard-release-apk`
-artifact from the Actions run and **extract the `.zip`** before tapping the `.apk` inside — the
-Actions artifact is ZIP-wrapped, the Release asset is not.
+The APK is signed with **v1 + v2 + v3** schemes (forced in `build.gradle.kts`; the CI
+`Verify release APK is signed` step asserts v1 + v2). Install over v2.5.0.0 — same release keystore.
 
 ---
 
-## Model provenance (verified, not synthetic)
+## Model card — DINOv2 v3.5.0.0
 
-The on-device model is a real, trained artifact — not a demo head.
+- **Architecture:** DINOv2 ViT-S/14 (self-supervised ImageNet base) + 38-class PlantVillage head.
+- **Fine-tune:** Kaggle kernel `kushagradubey09/leafguard-swin-finetune-v3-5-0-0` — DINOv2 base +
+  DANN domain-adversarial training + multi-crop + progressive layer unfreeze + CutMix/MixUp +
+  field oversampling + layer-wise LR decay + TTA.
+- **Conversion:** PyTorch → ONNX → TFLite (FP32) via `onnx2tf`. ImageNet normalization and the final
+  Softmax are **baked into the graph**, so the app feeds raw `[0,1]` pixels and reads real
+  probabilities. Verified bit-identical to the source ONNX in ONNX Runtime: argmax 3/3, max|diff| = 1e-6.
+- **I/O contract:** input `input` `[1,224,224,3] float32` in `[0,1]` (NHWC); output `probabilities`
+  `[1,38] float32` softmax. Same 38-class output order as `labels.txt` (the v2.0.0.0 canonical names).
+- **Artifact:** `app/src/main/assets/models/plant_disease.tflite` — 86.8 MB (86,845,656 bytes),
+  committed (under GitHub's 100 MB limit).
+- **Integrity:** SHA-256 `3660cfdbad212bcd5d307ee61e508382b8968b64d5e6f1feb63ba085267b69e7`, pinned
+  in `ModelIntegrity.EXPECTED_SHA256`.
 
-- **Architecture:** Swin-Tiny (Swin Transformer, patch4-window7-224), 38-class PlantVillage head.
-- **Source:** `https://huggingface.co/surgeonwz/plant-village` (apache-2.0) — the PyTorch
-  checkpoint used for conversion.
-- **Conversion pipeline:** PyTorch → ONNX → TFLite, via `models/conversion/convert.py`
-  (`dynamo=False` to bypass an onnx2tf Loop-op blocker). ImageNet mean/std normalization and the
-  final Softmax are **baked into the graph** as ONNX `Sub(mean)`/`Div(std)` nodes, so the app
-  feeds raw `[0,1]` pixels and reads real probabilities directly.
-- **Artifact:** `plant_disease.tflite` — **~112 MB** (FP32), input `[1,224,224,3] float32`,
-  output `[1,38] float32` (softmax). Verified off-device against its ONNX reference to a mean
-  max-abs diff of 4.42×10⁻⁸ with 8/8 argmax agreement.
-- **Dataset:** PlantVillage (Augmented), ~87,000 images, 38 classes, 14 crop species.
-- **Accuracy:** **98.59%** on the PlantVillage validation split.
-- **Distribution:** the trained `.tflite` is pulled from the private Kaggle dataset
-  `kushagradubey09/plant-disease-xai-models` by CI on every build (a small untrained demo model
-  is committed under `app/src/main/assets/models/` as a fallback for offline/fork builds).
-- **Targeted at 6 GB+ RAM devices** because of the ~120–180 MB resident interpreter footprint.
+---
 
-> The earlier MobileNetV2 candidate (~12 MB, 78.6% accuracy) was replaced by Swin-Tiny for the
-> accuracy gain; the larger footprint is the trade-off, accepted because the app targets
-> 6 GB+ RAM devices.
+## Test-time augmentation (TTA)
+
+The headline classification path (`DiseaseClassifier.classify`) runs the exact v3.5 eval TTA recipe
+— three views whose softmaxes are averaged before ranking:
+
+1. **orig** — center-crop to a square, resize to 224.
+2. **hflip** — horizontal flip of the orig view.
+3. **scale0.875** — central 0.875 crop of the square, resize to 224 (a slight zoom).
+
+This lifts on-device field accuracy toward the validated 86.7% (vs ~84% single-crop). The
+64-cell occlusion heatmap uses a separate single-pass path
+(`LeafClassifier.classifyForSaliency`) — TTA on every occluded patch would 3× its cost for no
+explainability gain.
 
 ---
 
 ## Explainability — occlusion sensitivity
 
-For an image classification prediction, a saliency heatmap shows which spatial regions of the
-input most raised the predicted class score, so the user can verify the model "looked at" the
-lesion and not the background. LeafGuard computes this on-device with **occlusion sensitivity**
-rather than Grad-CAM, because TFLite's `Interpreter` exposes neither the intermediate convolutional
-activations nor gradients — the two things Grad-CAM needs. Occlusion sensitivity is model-agnostic
-and needs only the forward pass:
-
-1. Run a forward pass to obtain the predicted class index and its baseline confidence.
-2. Lay a coarse **8×8 grid** over the 224×224 input.
-3. For each cell, grey-out (zero) that cell's pixels and re-run inference; record the predicted
-   class's **confidence drop** relative to the baseline.
-4. The per-cell drops form an 8×8 saliency map, upsampled to 224×224, colour-mapped
-   (blue→green→red), and composited over the captured photo.
-
-Cells whose occlusion caused the largest confidence drop are the regions the model was relying on
-for the prediction. The overlay is shown beside the confidence so the diagnosis is auditable — the
-core of trustworthy on-device disease detection. The trade-off vs. Grad-CAM is 64 extra forward
-passes per scan (acceptable on a 6 GB+ device; cached for the result screen).
-
-> **Phase 9 streaming (scan UX):** because those 64 passes take ~6–32 s on-device, the heatmap is
-> computed in an independent background coroutine after the diagnosis is shown. The result screen
-> appears immediately on the single classify pass with a "Generating explanation…" placeholder in the
-> heatmap slot; `ScanResultHolder.updateSaliency` streams the finished bitmap onto the screen when
-> ready (guarded by scan id so a stale heatmap from a superseded scan never clobbers the current
-> result), and the saliency image path is back-filled in Room via `ScanDao.updateSaliencyImagePath`.
-> A heatmap failure is caught and swallowed — the scan stays complete with a null heatmap rather than
-> stranding the UI on a spinner, which was the prior "stuck in scanning" regression.
+For an image-classification prediction, a saliency heatmap shows which spatial regions of the input
+most raised the predicted class score, so the user can verify the model "looked at" the lesion and
+not the background. LeafGuard computes this on-device with **occlusion sensitivity** rather than
+Grad-CAM, because TFLite's `Interpreter` exposes neither intermediate conv activations nor
+gradients. Occlusion sensitivity is model-agnostic and needs only the forward pass: an 8×8 grid is
+greyed cell-by-cell and the predicted class's confidence drop per cell becomes the jet-colormap
+overlay. The heatmap streams in after the diagnosis (a "Generating explanation…" placeholder fills
+the slot while it runs), so the user gets their diagnosis immediately.
 
 ---
 
-## Testing strategy
+## CI
 
-- **Unit (JVM):** pure logic — navigation route helpers, PIN validation, label parsing,
-  suggestion mapping + severity/staged-treatment parsing, occlusion-rect computation, pixel
-  normalization, repository mappers, the Scan repository (persist, per-plant filter,
-  observe-then-null), the Dashboard + History ViewModels (live stats, plant-name join, filter), the
-  Records CSV generator + per-plant grouping + the PdfExporter record-line logic, the Images gallery
-  grouping, the production `disease_suggestions.json` parsed end-to-end (org.json on the test
-  classpath), and the Room v1→v2→v3 migration runtime-tested under Robolectric. (Truth assertions,
-  Mockk for collaborators, Turbine for Flow, Robolectric for the migration test). Phase 9 adds a
-  Robolectric `ScanViewModelTest` that mocks the classifier/saliency generator to prove the scan
-  completes (`Done` emitted + row persisted) even when the heatmap throws, that a successful heatmap
-  streams onto the holder + back-fills its path, and that a stale heatmap from a superseded scan is
-  dropped; plus `ScanRepositoryImplTest` cases for `attachScanToPlant` (link / relink / unlink) and
-  `setSaliencyImage`, and a `ResultViewModelTest` for the "Add to plant" attach/create flows. **139
-  tests pass.** See `app/src/test/`.
-- **Instrumented:** Room DAOs against an in-memory database, Hilt-injected repositories, and
-  Compose UI tests for the auth flow and scan→result navigation. See `app/src/androidTest/`.
-- **CI:** GitHub Actions runs `./gradlew assembleDebug assembleRelease test lint` on every push,
-  pulls the trained Swin-Tiny model from Kaggle, verifies the release APK is **v1 + v2 signed**,
-  and publishes the signed `.apk` to **GitHub Releases**.
-- **Manual validation plan:** a small held-out leaf set per crop is captured on a reference
-  device to confirm top-1 accuracy and occlusion-heatmap locality before each release tag.
+`.github/workflows/android.yml` runs on every push to `main`: assembleDebug, assembleRelease,
+unit test, lintDebug, verify the release APK is signed (v1 + v2), upload the debug + release APK
+artifacts, and publish the signed APK to the `v2.5.1.0` GitHub Release. The trained DINOv2 TFLite
+is committed, so CI builds straight from the checkout — no Kaggle pull.
 
 ---
 
-## Roadmap summary
+## Changelog
 
-| Phase | Deliverable | Status |
-| --- | --- | --- |
-| 1 | Project foundation, Gradle/Compose/Hilt setup, navigation skeleton, theme, docs | ✅ |
-| 2 | PIN authentication (register/login), EncryptedSharedPreferences + Keystore, session gating | ✅ |
-| 3 | Room schema (plants, scans, history, records), DAOs, repositories, Plants CRUD | ✅ |
-| 4 | Trained Swin-Tiny TFLite model + occlusion-sensitivity XAI engine; signed release APK (v1+v2+v3) | ✅ |
-| 5 | CameraX live scan, capture → inference → result flow, persist ScanEntity + attach to plant | ✅ |
-| 6 | Dashboard stats, History feed, Images gallery, Records + CSV/PDF export | ✅ |
-| 7 | Treatment suggestions engine + per-disease knowledge base | ✅ |
-| 8 | Polish, full test pass, R8/release build, store readiness | ✅ |
-| 9 | Scan UX fix: result shows immediately, heatmap streams in background (never strands), "Add to plant" growth tracking | ✅ |
+- **v2.5.1.0** — Result-screen UX + model transparency: model-info card (DINOv2 v3.5 · 3-view TTA),
+  model-integrity banner wired from `ModelIntegrity` (was computed but never shown), qualitative
+  confidence tier (High/Moderate/Low), per-alternative mini bars, refreshed low-confidence hint.
+  README rewritten. DINOv2 model unchanged.
+- **v2.5.0.0** — DINOv2 ViT-S/14 v3.5.0.0 primary classifier (86.7% field, +19.4 pp over v2.0.0.0)
+  with 3-view TTA. Retired the v2.0.0.0 Swin-ONNX/ORT path (107 MB, .gitignore'd) and the JK-TK
+  YOLOv11 detector (228 MB, not bundled). CI workflow fixed to build from the committed model.
+- **v2.0.0.0** — Swin-Tiny ONNX via ONNX Runtime (67.3% field). *(superseded)*
+- **v1.5.0.0** — JK-TK YOLOv11 detector. *(superseded)*
 
-See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the per-phase detail.
-
----
-
-## Contributing / development notes
-
-- The PIN and any derived auth material are **never** backed up (see `res/xml/backup_rules.xml`).
-- `local.properties` (SDK path) and signing keystrokes are git-ignored; never commit them.
-- Every screen that is not yet implemented shows a `PhasePlaceholder` stating the phase number —
-  there is no fake "loading" UI pretending features exist.
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).

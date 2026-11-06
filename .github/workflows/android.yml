@@ -176,16 +176,16 @@ jobs:
         run: |
           set -euo pipefail
           APK="$(ls app/build/outputs/apk/release/*.apk | head -1)"
-          ASSET="LeafGuard-v2.5.0.0-release.apk"
+          ASSET="LeafGuard-v2.5.1.0-release.apk"
           cp "$APK" "$ASSET"
-          TAG="v2.5.0.0"
+          TAG="v2.5.1.0"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber
             echo "Updated existing release $TAG asset with the CI-built signed APK."
           else
             gh release create "$TAG" "$ASSET" \
-              --title "LeafGuard v2.5.0.0 — DINOv2 v3.5 primary (86.7% field) + 3-view TTA" \
-              --notes "DINOv2 ViT-S/14 fine-tune v3.5.0.0 is the new primary on-device classifier (86.7% field / 99.3% lab / 96.1% mixed), replacing the v2.0.0.0 Swin-Tiny ONNX (67.3% field). 3-view test-time augmentation (orig + hflip + scale0.875) on the headline path. Signed v1 + v2 + v3 — installs on all Android 8.0+ (minSdk 26) devices. Download the .apk and tap to install (no extraction needed)." \
+              --title "LeafGuard v2.5.1.0 — DINOv2 v3.5 + result-screen UX (model transparency, integrity banner, confidence tiers)" \
+              --notes "v2.5.1.0 builds on the v2.5.0.0 DINOv2 v3.5 primary (86.7% field / 99.3% lab / 96.1% mixed, 3-view TTA). Result screen gains: a model-info card (DINOv2 v3.5 . 3-view TTA . on-device), a model-integrity banner wired from ModelIntegrity (was computed but never shown), a qualitative confidence tier (High/Moderate/Low), and per-alternative mini bars. README rewritten; docs updated. Signed v1 + v2 + v3 — installs on all Android 8.0+ (minSdk 26) devices. Download the .apk and tap to install (no extraction needed)." \
               --target main
             echo "Created release $TAG."
           fi

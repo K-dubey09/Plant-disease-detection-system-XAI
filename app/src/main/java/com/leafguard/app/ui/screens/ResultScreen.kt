@@ -19,6 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material.icons.outlined.Verified
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -87,6 +89,7 @@ fun ResultScreen(
                 result = r,
                 plants = plants,
                 attachedPlantId = attachedPlantId,
+                modelTampered = viewModel.modelTampered,
                 onAttachToPlant = viewModel::attachToPlant,
                 onCreatePlantAndAttach = viewModel::createPlantAndAttach,
                 onScanAnother = onScanAnother,
@@ -101,6 +104,7 @@ private fun ResultContent(
     result: ScanResult,
     plants: List<Plant>,
     attachedPlantId: Long?,
+    modelTampered: Boolean,
     onAttachToPlant: (Long?) -> Unit,
     onCreatePlantAndAttach: (String, String) -> Unit,
     onScanAnother: () -> Unit,
@@ -117,17 +121,16 @@ private fun ResultContent(
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-        ) {
-            Text(
-                text = stringResource(R.string.scan_demo_banner),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                modifier = Modifier.padding(12.dp),
-            )
+        // Model integrity warning: the bundled .tflite's SHA-256 no longer matches the build-time
+        // digest (modified after signing). Surfaced BEFORE the diagnosis so a tampered-model result
+        // is read as unverified, without hiding the rest of the screen.
+        if (modelTampered) {
+            ModelIntegrityBanner()
         }
+
+        // Compact model-transparency card: tells the user which model + that TTA was used. Replaces
+        // the v1 demo banner (which advertised the retired Swin-Tiny + PlantVillage-only accuracy).
+        ModelInfoCard()
 
         // Headline prediction + confidence.
         val top = result.diagnosis
@@ -136,20 +139,14 @@ private fun ResultContent(
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.primary,
         )
-        Text(
-            text = stringResource(R.string.result_confidence_value, top.topLabel.plant, percent(top.topConfidence)),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        LinearProgressIndicator(
-            progress = { top.topConfidence.coerceIn(0f, 1f) },
-            modifier = Modifier.fillMaxWidth().height(8.dp),
+        ConfidenceDisplay(
+            plant = top.topLabel.plant,
+            confidence = top.topConfidence,
         )
 
-        // Low-confidence banner: the PlantVillage-trained model is often uncertain on real-world
-        // field photos (different backgrounds/lighting than the lab training set). When the top
-        // probability is below the threshold, surface that honestly and suggest the framing that
-        // matches the training distribution (single leaf, plain background, fills the frame).
+        // Low-confidence banner: the model is uncertain on this photo. When the top probability is
+        // below the threshold, surface that honestly and suggest framing that matches the training
+        // distribution (single leaf, plain background, fills the frame).
         if (top.topConfidence < LOW_CONFIDENCE_THRESHOLD) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -187,14 +184,27 @@ private fun ResultContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        // Alternatives.
+        // Alternatives: each runner-up gets its own label + mini confidence bar so the user can see
+        // how much less likely each is relative to the headline, not just a bullet.
         Text(stringResource(R.string.result_alternatives), style = MaterialTheme.typography.titleMedium)
         top.topK.drop(1).forEach { (label, conf) ->
-            Text(
-                "• ${label.condition} — ${percent(conf)}",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(start = 8.dp),
-            )
+            Column(modifier = Modifier.fillMaxWidth().padding(start = 8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(label.condition, style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        percent(conf),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                LinearProgressIndicator(
+                    progress = { conf.coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth().height(4.dp),
+                )
+            }
         }
 
         // Advisory.
@@ -516,3 +526,126 @@ private fun severityLabelRes(severity: Severity): Int = when (severity) {
 }
 
 private fun percent(f: Float): String = "${(f.coerceIn(0f, 1f) * 100).toInt()}%"
+
+/**
+ * v2.5.1.0: model-transparency card. Replaces the v1 "demo" banner (which advertised the retired
+ * Swin-Tiny + PlantVillage-only accuracy) with the actual model in use + a verified-integrity chip,
+ * so the user knows what produced their diagnosis and that it has not been tampered with.
+ */
+@Composable
+private fun ModelInfoCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(
+                Icons.Outlined.Verified,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.result_model_info),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+                Text(
+                    text = stringResource(R.string.result_model_ok),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * v2.5.1.0: integrity-warning banner shown when [ResultViewModel.modelTampered] is true (the
+ * bundled .tflite SHA-256 no longer matches the build-time digest). Placed above the diagnosis so a
+ * tampered-model result is read as unverified; the rest of the screen stays usable.
+ */
+@Composable
+private fun ModelIntegrityBanner() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(
+                Icons.Outlined.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Column {
+                Text(
+                    text = stringResource(R.string.result_model_tampered_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+                Text(
+                    text = stringResource(R.string.result_model_tampered_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * v2.5.1.0: richer confidence display. A prominent percent + a qualitative tier (High / Moderate /
+ * Low) sits above the linear bar, so the user gets an at-a-glance read of how much to trust the
+ * headline instead of parsing a bare number. Tier bands match [LOW_CONFIDENCE_THRESHOLD].
+ */
+@Composable
+private fun ConfidenceDisplay(plant: String, confidence: Float) {
+    val scheme = MaterialTheme.colorScheme
+    val tierRes = when {
+        confidence >= 0.7f -> R.string.result_confidence_tier_high
+        confidence >= LOW_CONFIDENCE_THRESHOLD -> R.string.result_confidence_tier_moderate
+        else -> R.string.result_confidence_tier_low
+    }
+    val tierColor = when {
+        confidence >= 0.7f -> scheme.primary
+        confidence >= LOW_CONFIDENCE_THRESHOLD -> scheme.tertiary
+        else -> scheme.error
+    }
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.result_confidence_value, plant, percent(confidence)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = scheme.onSurfaceVariant,
+            )
+            Surface(shape = RoundedCornerShape(50), color = tierColor.copy(alpha = 0.12f)) {
+                Text(
+                    text = stringResource(tierRes),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = tierColor,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                )
+            }
+        }
+        LinearProgressIndicator(
+            progress = { confidence.coerceIn(0f, 1f) },
+            modifier = Modifier.fillMaxWidth().height(8.dp),
+            color = tierColor,
+        )
+    }
+}
