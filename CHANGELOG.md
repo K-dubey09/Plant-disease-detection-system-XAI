@@ -23,6 +23,20 @@ Entries are grouped under a version heading (`Added` / `Changed` / `Fixed` / `Re
   URLs), and an `08_cross_cutting_learnings.md` meta-learnings doc. Sourced from the IEEE project
   report's per-version appendix, training-strategy rationale, and component ablation.
   — 2026-11-06 23:13 UTC, Kushagra Dubey
+- IEEE project report (`docs/IEEE_format/LeafGuard_IEEE_Project_Report.pdf`) amended with four
+  disclosure additions, expanding the report from 40 to 42 pages: (1) a dataset-accounting subsection
+  explaining that the 90,973 retained images map to 22,645 distinct split images (20,600 train +
+  2,045 validation), that the 24,690 figure is the arithmetic sum of the four reported split sizes
+  and double-counts `valid_mixed` (the union of `valid_lab` and `valid_field`), and that 68,328
+  retained images were set aside by the per-class caps; (2) an ablation-table Basis column and
+  amended text distinguishing the two measured shipped checkpoints (full v3.5, v3 baseline) from
+  the six attributed per-component removal costs (the v3.5 notebook contains no ablation loop; the
+  per-component checkpoints were not preserved); (3) a training-seed disclosure stating
+  `random.seed(42)` (and `tf.keras.utils.set_random_seed(42)` in v1), what it pins (split shuffle,
+  per-class capping) and what it does not (`torch.manual_seed` / `np.random.seed` / CUDA deterministic
+  flags are not set — re-runs reproduce splits but not bit-identical weights); (4) a model-versus-
+  application versioning note (independent version streams that do not necessarily advance together).
+  — 2026-11-06 23:51 UTC, Kushagra Dubey
 
 ---
 
