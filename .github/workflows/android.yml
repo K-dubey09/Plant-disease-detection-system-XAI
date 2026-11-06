@@ -72,33 +72,13 @@ jobs:
           [ -z "$SDKMGR" ] || yes | "$SDKMGR" "platforms;android-35" "build-tools;35.0.0" > /dev/null 2>&1
           exit 0
 
-      # Pull the TRAINED TFLite model from the private Kaggle dataset so the APK ships with a
-      # real classifier instead of the untrained demo model committed in assets/. The Kaggle
-      # dataset "plant-disease-xai-models" holds plant_disease.tflite (FP32, ~112 MB, Swin-Tiny,
-      # 38 PlantVillage classes, 98.59% accuracy) plus labels.txt and metadata. Targeted at
-      # 6GB+ RAM devices. Skipped when KAGGLE_USERNAME/KAGGLE_API_TOKEN are unset (fork PRs) -- the
-      # committed demo model is then used and the build still works. NOTE: Kaggle's newer KGAT_-prefixed
-      # API tokens authenticate ONLY via the KAGGLE_API_TOKEN env var, not the legacy
-      # KAGGLE_USERNAME/KAGGLE_KEY split (which 403s). KAGGLE_USERNAME is kept solely for the
-      # dataset slug (${KAGGLE_USERNAME}/plant-disease-xai-models).
-      - name: Pull trained TFLite model from Kaggle
-        if: env.KAGGLE_USERNAME != '' && env.KAGGLE_API_TOKEN != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m pip install --quiet kaggle
-          mkdir -p /tmp/kaggle-model
-          kaggle datasets download -d "${KAGGLE_USERNAME}/plant-disease-xai-models" \
-            -p /tmp/kaggle-model --unzip
-          # Drop the trained model + labels into the assets dir, overwriting the demo model.
-          # The filename MUST stay plant_disease.tflite (what InferenceModule.kt loads).
-          install -m 0644 /tmp/kaggle-model/plant_disease.tflite \
-            app/src/main/assets/models/plant_disease.tflite
-          if [ -f /tmp/kaggle-model/labels.txt ]; then
-            install -m 0644 /tmp/kaggle-model/labels.txt app/src/main/assets/models/labels.txt
-          fi
-          ls -la app/src/main/assets/models/
-          echo "Trained model size: $(stat -c%s app/src/main/assets/models/plant_disease.tflite) bytes"
+      # The trained DINOv2 v3.5.0.0 TFLite (86.8 MB, SHA-256 3660cfdb...) is COMMITTED at
+      # app/src/main/assets/models/plant_disease.tflite (under GitHub's 100 MB file limit), so CI
+      # builds straight from the checkout -- no Kaggle pull. (v1.5.0.0/v2.0.0.0 pulled the model
+      # from the private Kaggle dataset because it was .gitignore'd then; v2.5.0.0 commits it so the
+      # ModelIntegrity SHA in ModelIntegrity.EXPECTED_SHA256 matches exactly what ships.) A prior
+      # "Pull trained TFLite model from Kaggle" step that overwrote this file with the dataset's old
+      # Swin-Tiny model is removed -- it would have swapped the DINOv2 out and broken integrity.
 
       # Decode the release keystore from KEYSTORE_BASE64. The keystore itself is never committed.
       # KEYSTORE_FILE is written to GITHUB_ENV so build.gradle.kts (which reads System.getenv)
@@ -196,16 +176,16 @@ jobs:
         run: |
           set -euo pipefail
           APK="$(ls app/build/outputs/apk/release/*.apk | head -1)"
-          ASSET="LeafGuard-v1.0.0-release.apk"
+          ASSET="LeafGuard-v2.5.0.0-release.apk"
           cp "$APK" "$ASSET"
-          TAG="v1.0.0"
+          TAG="v2.5.0.0"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber
-            echo "Updated existing release $TAG asset."
+            echo "Updated existing release $TAG asset with the CI-built signed APK."
           else
             gh release create "$TAG" "$ASSET" \
-              --title "LeafGuard v1.0.0 — production release (all 8 phases)" \
-              --notes "Signed production release APK (v1.0.0, all 8 phases complete). Trained Swin-Tiny model (98.59% PlantVillage accuracy, 38 classes) with occlusion-sensitivity XAI, on-device Room persistence, Dashboard/History/Records/Images, and a per-disease treatment-suggestions engine (severity tiers + staged treatments + prevention). Signed v1 + v2 + v3 — installs on all Android 8.0+ (minSdk 26) devices. Download the .apk and tap to install (no extraction needed)." \
+              --title "LeafGuard v2.5.0.0 — DINOv2 v3.5 primary (86.7% field) + 3-view TTA" \
+              --notes "DINOv2 ViT-S/14 fine-tune v3.5.0.0 is the new primary on-device classifier (86.7% field / 99.3% lab / 96.1% mixed), replacing the v2.0.0.0 Swin-Tiny ONNX (67.3% field). 3-view test-time augmentation (orig + hflip + scale0.875) on the headline path. Signed v1 + v2 + v3 — installs on all Android 8.0+ (minSdk 26) devices. Download the .apk and tap to install (no extraction needed)." \
               --target main
             echo "Created release $TAG."
           fi
