@@ -165,9 +165,8 @@ jobs:
       # Publish the signed release APK as a GitHub Release asset. Release assets are served as
       # RAW files (no upload-artifact ZIP wrapping), so a user downloads app-release.apk directly
       # and taps to install — no extraction step. Runs only on main pushes that produced a signed
-      # release (KEYSTORE_FILE set); PRs and unsigned builds skip it. The v1.0.0 release is
-      # created once and the asset is clobbered on subsequent pushes, so the "latest" APK is
-      # always the most recent green build.
+      # release (KEYSTORE_FILE set); PRs and unsigned builds skip it. The TAG + ASSET name track
+      # the versionName in app/build.gradle.kts — bump them together when cutting a release.
       - name: Publish signed APK to GitHub Release
         if: github.ref == 'refs/heads/main' && env.KEYSTORE_FILE != ''
         shell: bash
@@ -176,16 +175,16 @@ jobs:
         run: |
           set -euo pipefail
           APK="$(ls app/build/outputs/apk/release/*.apk | head -1)"
-          ASSET="LeafGuard-v2.5.1.0-release.apk"
+          ASSET="LeafGuard-v2.7.0.0-release.apk"
           cp "$APK" "$ASSET"
-          TAG="v2.5.1.0"
+          TAG="v2.7.0.0"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" --clobber
             echo "Updated existing release $TAG asset with the CI-built signed APK."
           else
             gh release create "$TAG" "$ASSET" \
-              --title "LeafGuard v2.5.1.0 — DINOv2 v3.5 + result-screen UX (model transparency, integrity banner, confidence tiers)" \
-              --notes "v2.5.1.0 builds on the v2.5.0.0 DINOv2 v3.5 primary (86.7% field / 99.3% lab / 96.1% mixed, 3-view TTA). Result screen gains: a model-info card (DINOv2 v3.5 . 3-view TTA . on-device), a model-integrity banner wired from ModelIntegrity (was computed but never shown), a qualitative confidence tier (High/Moderate/Low), and per-alternative mini bars. README rewritten; docs updated. Signed v1 + v2 + v3 — installs on all Android 8.0+ (minSdk 26) devices. Download the .apk and tap to install (no extraction needed)." \
+              --title "LeafGuard v2.7.0.0 — per-plant scan timeline, SAF export + notification" \
+              --notes "v2.7.0.0 — reliability + export release. DINOv2 v3.5 model unchanged (86.7% field / 99.3% lab / 96.1% mixed, 3-view TTA). Fixed: Plant detail now lists that plant's scans (recent-to-last) with a progress summary + tap-to-open; CSV/PDF export writes to a user-picked location via the Storage Access Framework (e.g. Downloads) and posts a completion notification (POST_NOTIFICATIONS); About screen reads version + SHA from BuildConfig / ModelIntegrity; camera capture scratch file cleaned up; stale Phase-1 comments corrected. Scan-history persistence was already correct in source (every classification saves to a persistent Room file) — if you saw history vanish on close, you were on a pre-Phase-9 build, so install v2.7.0.0. Install over v2.5.1.0 / v2.6.0.0 (same release keystore; scans and plants carry over). Signed v1 + v2 + v3 — Android 8.0+ (minSdk 26). Download the .apk and tap to install. Full changelog: CHANGELOG.md." \
               --target main
             echo "Created release $TAG."
           fi
