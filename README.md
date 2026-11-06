@@ -211,7 +211,9 @@ committed artifact or a public notebook.
   Each is at `https://www.kaggle.com/code/kushagradubey09/<slug>`; the final one is
   [`leafguard-swin-finetune-v3-5-0-0`](https://www.kaggle.com/code/kushagradubey09/leafguard-swin-finetune-v3-5-0-0).
   The per-notebook methodology and diagnosed failures are in the project report's "Per-Version
-  Training Notebook Summaries" appendix (`docs/IEEE_format/LeafGuard_IEEE_Project_Report.pdf`).
+  Training Notebook Summaries" appendix (`docs/IEEE_format/LeafGuard_IEEE_Project_Report.pdf`), and
+  are consolidated as structured per-notebook learning logs (strategy → methodology → why → results →
+  mistakes → learnings → research cross-reference) in [`learning/`](learning/README.md).
 
 ## AI-assisted development
 

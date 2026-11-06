@@ -13,7 +13,16 @@ Entries are grouped under a version heading (`Added` / `Changed` / `Fixed` / `Re
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- `learning/` folder — the consolidated, per-notebook learning log for the seven-iteration training
+  arc (field accuracy 11% → 49% → 34% → 67.3% → 86.7%). One file per Kaggle notebook following a
+  fixed template (Goal → Strategy & methodology → Why this strategy → Code & config highlights →
+  Results & logged outcomes → Mistakes & diagnosed failures → Learnings → Research cross-reference),
+  plus a `README.md` index, a `00_research_cross_reference.md` mapping each design decision to its
+  source paper (DINOv2, DANN/GRL, effective-number, PlantVillage, PlantDoc, Swin — all with verified
+  URLs), and an `08_cross_cutting_learnings.md` meta-learnings doc. Sourced from the IEEE project
+  report's per-version appendix, training-strategy rationale, and component ablation.
+  — 2026-11-06 23:13 UTC, Kushagra Dubey
 
 ---
 
