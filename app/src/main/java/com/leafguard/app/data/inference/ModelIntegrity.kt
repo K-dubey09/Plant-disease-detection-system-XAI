@@ -65,5 +65,14 @@ class ModelIntegrity(
          * via `sha256sum app/src/main/assets/models/jktk_detector.tflite`.
          */
         const val EXPECTED_SHA256_JKTK = "a6e35929b98f50b8b8f418a286b47ae2d65cefdc8958d1d5a05018b03ae3a885"
+
+        /**
+         * SHA-256 of the v2.0.0.0 primary model `app/src/main/assets/models/swin_v3.onnx`
+         * (v3 Swin-Tiny, ImageNet base + CutMix/MixUp + field-oversample + layer-wise LR + TTA,
+         * 38 classes, 110,285,603 bytes float32 ONNX; 94.5% mixed / 67.3% field / 99.3% lab).
+         * Update after every model swap via
+         * `sha256sum app/src/main/assets/models/swin_v3.onnx`.
+         */
+        const val EXPECTED_SHA256_V3 = "d05d0f697ea8c3b24e827301e0ef4c9df4b46c51bcd497bd2dd4ada7ff247b21"
     }
 }

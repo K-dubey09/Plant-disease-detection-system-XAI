@@ -4,6 +4,12 @@
 -keep class org.tensorflow.lite.support.** { *; }
 -keep class org.tensorflow.lite.gpu.** { *; }
 
+# Keep ONNX Runtime (v2.0.0.0 primary inference path) classes + native peer. ORT loads its
+# native lib reflectively and the Java API is accessed via Hilt-provided OrtSession; without
+# these keeps R8 strips/renames the entry points and inference crashes at runtime.
+-keep class ai.onnxruntime.** { *; }
+-dontwarn ai.onnxruntime.**
+
 # Keep model metadata / label assets loaded reflectively.
 -keep class com.leafguard.app.data.local.model.** { *; }
 -keep class com.leafguard.app.data.domain.model.** { *; }

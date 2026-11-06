@@ -7,6 +7,7 @@ import com.leafguard.app.data.inference.JktkLabelParser
 import com.leafguard.app.data.inference.LabelParser
 import com.leafguard.app.data.inference.LeafClassifier
 import com.leafguard.app.data.inference.ModelIntegrity
+import com.leafguard.app.data.inference.OnnxDiseaseClassifier
 import com.leafguard.app.data.inference.SaliencyGenerator
 import com.leafguard.app.data.inference.SuggestionEngine
 import com.leafguard.app.data.inference.SuggestionParser
@@ -22,6 +23,8 @@ import java.nio.ByteOrder
 import javax.inject.Qualifier
 import javax.inject.Singleton
 import org.tensorflow.lite.Interpreter
+import ai.onnxruntime.OrtEnvironment
+import ai.onnxruntime.OrtSession
 
 /**
  * Hilt qualifier for the PlantVillage Swin-Tiny model artifacts (buffer / interpreter / labels).
@@ -40,22 +43,106 @@ annotation class SwinModel
 annotation class JktkModel
 
 /**
- * Wires the on-device inference stack. The PRIMARY [LeafClassifier] is [JktkDetector] (YOLOv11,
- * 116 classes, trained on lab + real-field images -- generalizes to camera input). The original
- * [DiseaseClassifier] (Swin-Tiny, 38 PlantVillage classes) is retained under [@SwinModel] as a
- * rollback: to switch back, change [provideLeafClassifier] to return the [DiseaseClassifier]
- * instead of [JktkDetector], and point [provideSuggestions] / [provideModelIntegrity] back at the
- * Swin assets + digest.
+ * Hilt qualifier for the v2.0.0.0 v3 Swin-Tiny ONNX model artifacts (model bytes / ORT session).
+ * The v3 model (ImageNet base + CutMix/MixUp + field-oversample + layer-wise LR + TTA) is the
+ * PRIMARY [LeafClassifier]; the legacy TFLite Swin ([@SwinModel]) and JK-TK ([@JktkModel]) paths
+ * are retained as rollback.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class V3Model
+
+/**
+ * Wires the on-device inference stack. The PRIMARY [LeafClassifier] is [OnnxDiseaseClassifier]
+ * (v2.0.0.0): the v3 fine-tuned Swin-Tiny ONNX model — ImageNet-pretrained base (NOT the
+ * PlantVillage-overfit base that capped v2.2 at 34% field) + CutMix/MixUp + field oversampling +
+ * layer-wise LR decay + TTA — reaching 94.5% mixed / 67.3% field / 99.3% lab validation. It runs
+ * via ONNX Runtime (Swin's window-attention Roll/Cast/Einsum ops make ONNX->TFLite fragile, so
+ * the verified float32 ONNX graph executes directly).
+ *
+ * The legacy [DiseaseClassifier] (TFLite Swin-Tiny, 38 PlantVillage classes) is retained under
+ * [@SwinModel] as a rollback; [JktkDetector] (YOLOv11) is retained under [@JktkModel] as the
+ * v1.5.0.0 rollback (its 228 MB .tflite is not bundled — see .gitignore). To roll back, change
+ * [provideLeafClassifier] to return the rollback classifier and repoint [provideSuggestions] /
+ * [provideModelIntegrity] at the corresponding assets + digest.
  *
  * The [SaliencyGenerator], [SuggestionEngine], and [ModelIntegrity] all bind to the PRIMARY path:
- * the occlusion heatmap calls the detector, suggestions are keyed by the JK-TK label names (117
- * entries incl. the "Unknown" OOD sentinel), and integrity checks the JK-TK buffer's SHA-256.
+ * the occlusion heatmap calls the V3 ORT classifier, suggestions are keyed by the 38-class
+ * canonical names (labels.txt / disease_suggestions.json), and integrity checks the V3 ONNX
+ * buffer's SHA-256 against [ModelIntegrity.EXPECTED_SHA256_V3].
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object InferenceModule {
 
-    // ---------- JK-TK YOLOv11 detector (PRIMARY) ----------
+    // ---------- v3 Swin-Tiny ONNX via ORT (PRIMARY, v2.0.0.0) ----------
+
+    /** Loads the v3 ONNX model bytes (107 MB) from assets. readBytes() is compression-safe. */
+    @Provides
+    @Singleton
+    @V3Model
+    fun provideV3ModelBytes(@ApplicationContext ctx: Context): ByteArray =
+        ctx.assets.open("models/swin_v3.onnx").use { it.readBytes() }
+
+    /** Direct ByteBuffer over the v3 model bytes for [ModelIntegrity] (SHA-256 over the same bytes
+     *  ORT executes). Allocated direct + native order to match the existing integrity pattern. */
+    @Provides
+    @Singleton
+    @V3Model
+    fun provideV3ModelBuffer(@V3Model bytes: ByteArray): ByteBuffer =
+        ByteBuffer.allocateDirect(bytes.size).order(ByteOrder.nativeOrder()).put(bytes)
+
+    /** Builds the singleton ORT session over the v3 ONNX bytes. Created via [OrtEnvironment]
+     *  (the OrtSession constructors are package-private; the public [OrtEnvironment.createSession]
+     *  overload uses the default allocator internally). The CPU execution provider runs the float32
+     *  weights as-is (the model ships float32 for fidelity to the verified checkpoint). */
+    @Provides
+    @Singleton
+    @V3Model
+    fun provideV3Session(@V3Model bytes: ByteArray): OrtSession =
+        OrtEnvironment.getEnvironment().createSession(bytes, OrtSession.SessionOptions())
+
+    @Provides
+    @Singleton
+    @V3Model
+    fun provideV3Labels(@ApplicationContext ctx: Context): List<DiseaseLabel> =
+        readAsset(ctx, "models/labels.txt").let(LabelParser::parse)
+
+    @Provides
+    @Singleton
+    fun provideOnnxDiseaseClassifier(
+        @V3Model session: OrtSession,
+        @V3Model labels: List<DiseaseLabel>,
+    ): OnnxDiseaseClassifier = OnnxDiseaseClassifier(session, labels)
+
+    /** Primary leaf model (v2.0.0.0): the v3 ORT Swin-Tiny classifier. */
+    @Provides
+    @Singleton
+    fun provideLeafClassifier(cls: OnnxDiseaseClassifier): LeafClassifier = cls
+
+    /** Primary suggestions map: the 38-class canonical set (labels.txt / disease_suggestions.json). */
+    @Provides
+    @Singleton
+    fun provideSuggestions(@ApplicationContext ctx: Context): Map<String, Suggestion> =
+        readAsset(ctx, "models/disease_suggestions.json").let(SuggestionParser::parse)
+
+    @Provides
+    @Singleton
+    fun provideSaliencyGenerator(classifier: LeafClassifier): SaliencyGenerator =
+        SaliencyGenerator(classifier)
+
+    @Provides
+    @Singleton
+    fun provideSuggestionEngine(suggestions: Map<String, Suggestion>): SuggestionEngine =
+        SuggestionEngine(suggestions)
+
+    /** Integrity over the PRIMARY (v3 ONNX) model buffer. */
+    @Provides
+    @Singleton
+    fun provideModelIntegrity(@V3Model modelBuffer: ByteBuffer): ModelIntegrity =
+        ModelIntegrity(modelBuffer, ModelIntegrity.EXPECTED_SHA256_V3)
+
+    // ---------- JK-TK YOLOv11 detector (v1.5.0.0 rollback — kept wired, not primary) ----------
 
     /**
      * Loads the primary model into a direct [ByteBuffer]. readBytes() (not mmap via
@@ -87,32 +174,11 @@ object InferenceModule {
         @JktkModel labels: List<DiseaseLabel>,
     ): JktkDetector = JktkDetector(interpreter, labels)
 
-    /** Primary leaf model. Roll back to Swin: return `DiseaseClassifier(swinInterp, swinLabels)`. */
-    @Provides
-    @Singleton
-    fun provideLeafClassifier(detector: JktkDetector): LeafClassifier = detector
-
-    /** Primary suggestions map: the 117-entry JK-TK set (116 classes + "Unknown" OOD entry). */
-    @Provides
-    @Singleton
-    fun provideSuggestions(@ApplicationContext ctx: Context): Map<String, Suggestion> =
-        readAsset(ctx, "models/disease_suggestions_jktk.json").let(SuggestionParser::parse)
-
-    @Provides
-    @Singleton
-    fun provideSaliencyGenerator(classifier: LeafClassifier): SaliencyGenerator =
-        SaliencyGenerator(classifier)
-
-    @Provides
-    @Singleton
-    fun provideSuggestionEngine(suggestions: Map<String, Suggestion>): SuggestionEngine =
-        SuggestionEngine(suggestions)
-
-    /** Integrity over the PRIMARY (JK-TK) model buffer. */
-    @Provides
-    @Singleton
-    fun provideModelIntegrity(@JktkModel modelBuffer: ByteBuffer): ModelIntegrity =
-        ModelIntegrity(modelBuffer, ModelIntegrity.EXPECTED_SHA256_JKTK)
+    // The primary LeafClassifier / Suggestions / SaliencyGenerator / SuggestionEngine /
+    // ModelIntegrity bindings are provided by the V3 ORT section above. To roll back to JK-TK,
+    // repoint provideLeafClassifier -> JktkDetector, provideSuggestions -> disease_suggestions_jktk.json,
+    // and provideModelIntegrity -> @JktkModel buffer + EXPECTED_SHA256_JKTK. The 228 MB
+    // jktk_detector.tflite is not bundled (see .gitignore) — fetch it from the v1.5.0.0 release first.
 
     // ---------- Swin-Tiny (PlantVillage) fallback — kept wired for rollback, not primary ----------
 

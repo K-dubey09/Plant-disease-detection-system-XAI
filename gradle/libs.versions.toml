@@ -16,6 +16,9 @@ securityCrypto = "1.1.0-alpha06"
 tflite = "2.16.1"
 tfliteSupport = "0.4.4"
 tfliteGpu = "2.16.1"
+# v2.0.0.0: ONNX Runtime runs the v3 Swin-Tiny ONNX model directly (no fragile Swin->TFLite
+# conversion). float16 weights are upcast to float32 by the CPU EP for compute -> no accuracy loss.
+onnxruntime = "1.19.2"
 coroutines = "1.9.0"
 coil = "2.7.0"
 accompanistPermissions = "0.36.0"
@@ -76,6 +79,9 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 tflite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tflite" }
 tflite-support = { group = "org.tensorflow", name = "tensorflow-lite-support", version.ref = "tfliteSupport" }
 tflite-gpu = { group = "org.tensorflow", name = "tensorflow-lite-gpu", version.ref = "tfliteGpu" }
+
+# ONNX Runtime (v2.0.0.0 primary path — runs the v3 Swin-Tiny ONNX model)
+onnxruntime-android = { group = "com.microsoft.onnxruntime", name = "onnxruntime-android", version.ref = "onnxruntime" }
 
 # Coroutines
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }

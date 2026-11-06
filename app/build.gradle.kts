@@ -19,8 +19,11 @@ android {
         // adaptive-icon + splash-screen pipeline clean and avoids legacy raster fallbacks.
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "1.5.0.0"
+        // v2.0.0.0: v3 Swin-Tiny (ImageNet base + CutMix/MixUp + field-oversample + layer-wise LR
+        // + TTA) becomes the PRIMARY classifier via ONNX Runtime. Field 67.3% / lab 99.3% / mixed
+        // 94.5% (v2.2 was 34% / 74% / 66%). See download/swin_strategy/.
+        versionCode = 8
+        versionName = "2.0.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -169,10 +172,17 @@ dependencies {
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.datastore.preferences)
 
-    // TensorFlow Lite (on-device inference + Grad-CAM XAI)
+    // TensorFlow Lite (on-device inference + Grad-CAM XAI) — retained for the JK-TK / legacy
+    // Swin rollback paths.
     implementation(libs.tflite)
     implementation(libs.tflite.support)
     implementation(libs.tflite.gpu)
+
+    // ONNX Runtime (v2.0.0.0 PRIMARY path) — runs the v3 Swin-Tiny ONNX model directly. Swin's
+    // window-attention Roll/Cast/Einsum ops make ONNX->TFLite fragile, so the v3 model ships as
+    // float16 ONNX (~54 MB) and executes via ORT, which runs the exact graph that scored 94.5%
+    // mixed / 67.3% field. The CPU EP upcasts fp16 weights to fp32 for compute -> no accuracy loss.
+    implementation(libs.onnxruntime.android)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)

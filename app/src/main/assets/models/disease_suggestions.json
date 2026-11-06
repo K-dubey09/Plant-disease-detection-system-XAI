@@ -123,9 +123,9 @@
     "summary": "No disease symptoms detected on this leaf.",
     "treatmentStages": []
   },
-  "Cherry___Powdery_mildew": {
+  "Cherry_(including_sour)___Powdery_mildew": {
     "condition": "Powdery mildew (Podosphaera spp.)",
-    "label": "Cherry___Powdery_mildew",
+    "label": "Cherry_(including_sour)___Powdery_mildew",
     "plant": "Cherry",
     "prevention": [
       "Prune for airflow; avoid excess nitrogen.",
@@ -157,9 +157,9 @@
       }
     ]
   },
-  "Cherry___healthy": {
+  "Cherry_(including_sour)___healthy": {
     "condition": "Healthy",
-    "label": "Cherry___healthy",
+    "label": "Cherry_(including_sour)___healthy",
     "plant": "Cherry",
     "prevention": [
       "Continue routine monitoring and balanced care."
@@ -168,9 +168,9 @@
     "summary": "No disease symptoms detected on this leaf.",
     "treatmentStages": []
   },
-  "Corn___Cercospora_gray_leaf_spot": {
+  "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
     "condition": "Gray leaf spot (Cercospora zeae-maydis)",
-    "label": "Corn___Cercospora_gray_leaf_spot",
+    "label": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
     "plant": "Corn",
     "prevention": [
       "Rotate crops and incorporate residue.",
@@ -202,9 +202,9 @@
       }
     ]
   },
-  "Corn___Common_rust": {
+  "Corn_(maize)___Common_rust_": {
     "condition": "Common rust (Puccinia sorghi)",
-    "label": "Corn___Common_rust",
+    "label": "Corn_(maize)___Common_rust_",
     "plant": "Corn",
     "prevention": [
       "Plant resistant hybrids.",
@@ -236,9 +236,9 @@
       }
     ]
   },
-  "Corn___Northern_Leaf_Blight": {
+  "Corn_(maize)___Northern_Leaf_Blight": {
     "condition": "Northern leaf blight (Exserohilum turcicum)",
-    "label": "Corn___Northern_Leaf_Blight",
+    "label": "Corn_(maize)___Northern_Leaf_Blight",
     "plant": "Corn",
     "prevention": [
       "Plant resistant hybrids.",
@@ -270,9 +270,9 @@
       }
     ]
   },
-  "Corn___healthy": {
+  "Corn_(maize)___healthy": {
     "condition": "Healthy",
-    "label": "Corn___healthy",
+    "label": "Corn_(maize)___healthy",
     "plant": "Corn",
     "prevention": [
       "Continue routine monitoring and balanced care."
@@ -471,9 +471,9 @@
     "summary": "No disease symptoms detected on this leaf.",
     "treatmentStages": []
   },
-  "Pepper_bell___Bacterial_spot": {
+  "Pepper,_bell___Bacterial_spot": {
     "condition": "Bacterial spot (Xanthomonas spp.)",
-    "label": "Pepper_bell___Bacterial_spot",
+    "label": "Pepper,_bell___Bacterial_spot",
     "plant": "Pepper (bell)",
     "prevention": [
       "Use disease-free seed and transplants.",
@@ -505,9 +505,9 @@
       }
     ]
   },
-  "Pepper_bell___healthy": {
+  "Pepper,_bell___healthy": {
     "condition": "Healthy",
-    "label": "Pepper_bell___healthy",
+    "label": "Pepper,_bell___healthy",
     "plant": "Pepper (bell)",
     "prevention": [
       "Continue routine monitoring and balanced care."
