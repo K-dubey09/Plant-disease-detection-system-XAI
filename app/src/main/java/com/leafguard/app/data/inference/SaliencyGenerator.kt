@@ -28,7 +28,7 @@ class SaliencyGenerator(
     private val gridSize: Int = DEFAULT_GRID,
 ) {
     fun generate(bitmap: Bitmap): Bitmap {
-        val baseline = classifier.classify(bitmap)
+        val baseline = classifier.classifyForSaliency(bitmap)
         val target: DiseaseLabel = baseline.topLabel
         val baseConfidence = baseline.topConfidence
 
@@ -38,7 +38,7 @@ class SaliencyGenerator(
         val heat = FloatArray(gridSize * gridSize)
         for (rect in rects) {
             val occluded = occludeRegion(bitmap, rect)
-            val after = classifier.classify(occluded)
+            val after = classifier.classifyForSaliency(occluded)
             val afterConfidence = after.topK.firstOrNull { it.first == target }?.second ?: 0f
             val drop = (baseConfidence - afterConfidence).coerceAtLeast(0f)
             heat[rect.index] = drop

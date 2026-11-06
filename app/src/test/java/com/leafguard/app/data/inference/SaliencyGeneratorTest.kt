@@ -40,7 +40,7 @@ class SaliencyGeneratorTest {
     @Test
     fun generate_producesInputSizedHeatmapThatIsHotAtTheDecisionCentre() {
         val classifier = mockk<DiseaseClassifier>()
-        every { classifier.classify(any()) } answers { diagnoseForOcclusion(firstArg()) }
+        every { classifier.classifyForSaliency(any()) } answers { diagnoseForOcclusion(firstArg()) }
         val generator = SaliencyGenerator(classifier, gridSize = 8)
 
         val source = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
@@ -66,7 +66,7 @@ class SaliencyGeneratorTest {
         // cell records the same drop. Smoothing + the jet ramp must still yield a real (opaque,
         // non-transparent) overlay of the right size, not a blank/transparent bitmap.
         val classifier = mockk<DiseaseClassifier>()
-        every { classifier.classify(any()) } returns Diagnosis(target, 0.5f, listOf(target to 0.5f))
+        every { classifier.classifyForSaliency(any()) } returns Diagnosis(target, 0.5f, listOf(target to 0.5f))
         val generator = SaliencyGenerator(classifier, gridSize = 8)
 
         val source = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)

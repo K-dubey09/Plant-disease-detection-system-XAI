@@ -80,12 +80,4 @@ models/tflite/
 # The small labels_jktk.txt + disease_suggestions_jktk.json ARE tracked.
 app/src/main/assets/models/jktk_detector.tflite
 
-# v2.0.0.0 v3 Swin-Tiny ONNX model — 107 MB FP32 ONNX, over GitHub's 100 MB file limit, so it
-# is NOT committed. (float16 conversion of Swin's window-attention Cast/Einsum ops is fragile, so
-# the model ships as the verified float32 graph that scored 94.5% mixed / 67.3% field / 99.3% lab.)
-# It ships inside the v2.0.0.0 release APK AND as a standalone release asset. To rebuild from
-# source, download swin_v3.onnx from the v2.0.0.0 release assets (or pull it from the Kaggle
-# kernel output kushagradubey09/leafguard-swin-finetune-v3) into app/src/main/assets/models/
-# before running ./gradlew assembleRelease. The small labels.txt + disease_suggestions.json ARE tracked.
-app/src/main/assets/models/swin_v3.onnx
 models/metadata/

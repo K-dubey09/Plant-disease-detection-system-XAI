@@ -53,26 +53,14 @@ class ModelIntegrity(
 
     companion object {
         /**
-         * SHA-256 of the shipped `app/src/main/assets/models/plant_disease.tflite` (the Swin-Tiny
-         * transformer + 38-class head, 9,075,516 bytes). Update this constant after every model
-         * swap and regenerate with `sha256sum app/src/main/assets/models/plant_disease.tflite`.
+         * SHA-256 of the shipped `app/src/main/assets/models/plant_disease.tflite` (the DINOv2
+         * ViT-S/14 fine-tune v3.5.0.0: 38 PlantVillage classes, 86.7% field / 99.3% lab / 96.1%
+         * mixed; 86,845,656 bytes). The model is a drop-in for the prior Swin-Tiny asset -- same
+         * `[1,224,224,3]` float32 [0,1] input with ImageNet norm + softmax baked into the graph, same
+         * 38-class output order as labels.txt -- verified bit-identical to the source ONNX in ORT
+         * (argmax 3/3, max|diff|=1e-6). Update this constant after every model swap and regenerate
+         * with `sha256sum app/src/main/assets/models/plant_disease.tflite`.
          */
-        const val EXPECTED_SHA256 = "28efdfa3e1ded7dcf8c0829c51a593f3f457d9535afb93703a91d4a478468b58"
-
-        /**
-         * SHA-256 of the primary `app/src/main/assets/models/jktk_detector.tflite`
-         * (JK-TK YOLOv11 detector, 116 classes, 228,101,416 bytes). Update after every model swap
-         * via `sha256sum app/src/main/assets/models/jktk_detector.tflite`.
-         */
-        const val EXPECTED_SHA256_JKTK = "a6e35929b98f50b8b8f418a286b47ae2d65cefdc8958d1d5a05018b03ae3a885"
-
-        /**
-         * SHA-256 of the v2.0.0.0 primary model `app/src/main/assets/models/swin_v3.onnx`
-         * (v3 Swin-Tiny, ImageNet base + CutMix/MixUp + field-oversample + layer-wise LR + TTA,
-         * 38 classes, 110,285,603 bytes float32 ONNX; 94.5% mixed / 67.3% field / 99.3% lab).
-         * Update after every model swap via
-         * `sha256sum app/src/main/assets/models/swin_v3.onnx`.
-         */
-        const val EXPECTED_SHA256_V3 = "d05d0f697ea8c3b24e827301e0ef4c9df4b46c51bcd497bd2dd4ada7ff247b21"
+        const val EXPECTED_SHA256 = "3660cfdbad212bcd5d307ee61e508382b8968b64d5e6f1feb63ba085267b69e7"
     }
 }

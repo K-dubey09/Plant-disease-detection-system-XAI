@@ -19,11 +19,12 @@ android {
         // adaptive-icon + splash-screen pipeline clean and avoids legacy raster fallbacks.
         minSdk = 26
         targetSdk = 35
-        // v2.0.0.0: v3 Swin-Tiny (ImageNet base + CutMix/MixUp + field-oversample + layer-wise LR
-        // + TTA) becomes the PRIMARY classifier via ONNX Runtime. Field 67.3% / lab 99.3% / mixed
-        // 94.5% (v2.2 was 34% / 74% / 66%). See download/swin_strategy/.
-        versionCode = 8
-        versionName = "2.0.0.0"
+        // v2.5.0.0: DINOv2 ViT-S/14 fine-tune v3.5.0.0 becomes the PRIMARY classifier (TFLite,
+        // 3-view TTA: orig + hflip + scale0.875). Field 86.7% / lab 99.3% / mixed 96.1% (v2.0.0.0
+        // Swin-ONNX was 67.3% / 99.3% / 94.5%). Retires the ORT v3 path; ships the committed
+        // 86.8 MB DINOv2 TFLite (same [1,224,224,3] [0,1] -> [38] contract as the prior Swin asset).
+        versionCode = 9
+        versionName = "2.5.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -177,12 +178,6 @@ dependencies {
     implementation(libs.tflite)
     implementation(libs.tflite.support)
     implementation(libs.tflite.gpu)
-
-    // ONNX Runtime (v2.0.0.0 PRIMARY path) — runs the v3 Swin-Tiny ONNX model directly. Swin's
-    // window-attention Roll/Cast/Einsum ops make ONNX->TFLite fragile, so the v3 model ships as
-    // float16 ONNX (~54 MB) and executes via ORT, which runs the exact graph that scored 94.5%
-    // mixed / 67.3% field. The CPU EP upcasts fp16 weights to fp32 for compute -> no accuracy loss.
-    implementation(libs.onnxruntime.android)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
