@@ -39,6 +39,7 @@
 | `HistoryViewModel` | UI | 6 | Join scans ↔ plant name in-memory; per-plant filter → `HistoryItem` list |
 | `RecordsViewModel` + `CsvGenerator` / `PdfExporter` | UI | 6 | Group scans by plant → per-plant disease log; pure RFC-4180 CSV (tested) + on-device `PdfDocument` PDF |
 | `ImagesViewModel` | UI | 6 | Group image-bearing scans (`sourceImagePath != null`) by plant → Coil `AsyncImage` gallery |
+| `AboutScreen` | UI | v2.6.0.0 | Read-only transparency screen: app version (2.6.0.0), shipped model SHA-256 prefix, model/code availability (GitHub + Kaggle), and the AI-assisted-development disclosure. Reached from the Dashboard; static — no data- or domain-layer types, does not touch the inference path. |
 | `SuggestionsEngine`, `SuggestionParser`, `Severity`/`TreatmentStage` | Domain | 7 | Map 38 classes → severity tier + staged treatment (Immediate/Short-term/Long-term) + prevention; parser reads the production JSON (org.json), engine exposes `suggest`/`severityFor` |
 | `LeafGuardDatabaseMigrationTest`, `PdfExporter.formatRecordLine`/`displayName` | Test | 8 | Robolectric JVM test seeds a real v1 DB → opens at v3 with both migrations, asserting the plant survives + scans gains the image-path columns + a scan with paths round-trips; PdfExporter record-line logic extracted as `internal` pure helpers + JVM-tested (the `PdfDocument` write stays instrumented-only). Tagged v1.0.0 release; APK excl-model 25.0 MB. |
 
@@ -51,7 +52,8 @@ auth/login ─────┘
 
 dashboard ─┬─► plants ─► plant/{id} ─► scan?plantId={id} ─► result/{scanId}
            ├─► scan ─► result/{scanId}
-           └─► images
+           ├─► images
+           └─► about   (v2.6.0.0: version, model SHA-256, model/code availability, AI disclosure)
 
 (bottom nav: dashboard | plants | scan | history | records)
 history        records        images        result/{scanId}

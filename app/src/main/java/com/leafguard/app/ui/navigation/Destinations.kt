@@ -29,6 +29,7 @@ object Routes {
     const val PLANT_DETAIL = "plant/{plantId}"
     const val RESULT = "result/{scanId}"   // Phase 5: each scan is addressable by its persisted id
     const val RESULT_ARG_SCAN_ID = "scanId"
+    const val ABOUT = "about"              // v2.6.0.0: transparency screen (version, model, AI disclosure)
 
     fun plantDetail(plantId: Long): String = "plant/$plantId"
     fun result(scanId: Long): String = "result/$scanId"

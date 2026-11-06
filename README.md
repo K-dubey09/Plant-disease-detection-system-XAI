@@ -6,10 +6,13 @@ once with a 6-digit PIN, tracks individual plants, scans leaves in real time, an
 per-plant disease history with actionable, stage-aware treatment suggestions. No leaf ever leaves
 the device.
 
-> **Current: v2.5.1.0** — DINOv2 v3.5 primary classifier (86.7% field / 99.3% lab / 96.1% mixed)
-> with 3-view test-time augmentation. The signed release APK is on the
-> [v2.5.1.0 GitHub Release](https://github.com/K-dubey09/Plant-disease-detection-system-XAI/releases/tag/v2.5.1.0)
-> as a raw `.apk` — download and tap to install on Android 8.0+. CI is green on `main`.
+> **Current: v2.6.0.0** — transparency & reproducibility release. The DINOv2 v3.5 primary classifier
+> (86.7% field / 99.3% lab / 96.1% mixed) is **unchanged**; new: an in-app **About** screen (version,
+> model SHA-256, model/code availability, AI-assisted-development disclosure), the seven public Kaggle
+> training notebooks (including the failed iterations), and updated docs. Build the signed release APK
+> with `./gradlew assembleRelease` (or via CI); the prior
+> [v2.5.1.0 APK](https://github.com/K-dubey09/Plant-disease-detection-system-XAI/releases/tag/v2.5.1.0)
+> remains on the Releases page until v2.6.0.0 is cut. CI is green on `main`.
 
 ---
 
@@ -21,6 +24,7 @@ the device.
 | v2.0.0.0 | Swin-Tiny ONNX (ImageNet base) via ORT | 67.3% | 99.3% | 94.5% | 107 MB, .gitignore'd (broke fresh builds) |
 | **v2.5.0.0** | **DINOv2 ViT-S/14 v3.5 (TFLite, 3-view TTA)** | **86.7%** | **99.3%** | **96.1%** | **86.8 MB, committed** |
 | **v2.5.1.0** | DINOv2 v3.5 (unchanged) + result-screen UX | **86.7%** | **99.3%** | **96.1%** | **86.8 MB, committed** |
+| **v2.6.0.0** | DINOv2 v3.5 (unchanged) + About screen + disclosures | **86.7%** | **99.3%** | **96.1%** | **86.8 MB, committed** |
 
 The v2.5 line closes the PlantVillage→field domain gap that capped earlier models, and ships the
 model **committed in the repo** (under GitHub's 100 MB limit) so every checkout builds the real
@@ -99,9 +103,11 @@ is committed in `app/src/main/assets/models/` — no Kaggle pull needed.
 
 ## Install the release APK
 
-1. Open the repository's **Releases** page and pick the
-   [v2.5.1.0 release](https://github.com/K-dubey09/Plant-disease-detection-system-XAI/releases/tag/v2.5.1.0).
-2. Download `LeafGuard-v2.5.1.0-release.apk` (~112 MB) directly.
+1. Open the repository's **Releases** page. The
+   [v2.5.1.0 release](https://github.com/K-dubey09/Plant-disease-detection-system-XAI/releases/tag/v2.5.1.0)
+   APK (~112 MB) is available now; the v2.6.0.0 APK will be posted there once cut (build it locally
+   with `./gradlew assembleRelease` in the meantime).
+2. Download `LeafGuard-v2.5.1.0-release.apk` (~112 MB) directly, or the v2.6.0.0 APK when posted.
 3. On the device (Android 8.0+), tap the downloaded `.apk` and allow **Install unknown apps** for
    your browser/files app, then confirm.
 4. First launch opens the Register screen.
@@ -114,12 +120,18 @@ The APK is signed with **v1 + v2 + v3** schemes (forced in `build.gradle.kts`; t
 ## Model card — DINOv2 v3.5.0.0
 
 - **Architecture:** DINOv2 ViT-S/14 (self-supervised ImageNet base) + 38-class PlantVillage head.
-- **Fine-tune:** Kaggle kernel `kushagradubey09/leafguard-swin-finetune-v3-5-0-0` — DINOv2 base +
-  DANN domain-adversarial training + multi-crop + progressive layer unfreeze + CutMix/MixUp +
-  field oversampling + layer-wise LR decay + TTA.
+- **Fine-tune:** Kaggle notebook
+  [`kushagradubey09/leafguard-swin-finetune-v3-5-0-0`](https://www.kaggle.com/code/kushagradubey09/leafguard-swin-finetune-v3-5-0-0)
+  — DINOv2 base + DANN domain-adversarial training + multi-crop + progressive layer unfreeze +
+  CutMix/MixUp + field oversampling + layer-wise LR decay + TTA. The six earlier notebooks
+  (including the failed v2.x iterations) are public under the same account; see
+  "Model and code availability" below.
 - **Conversion:** PyTorch → ONNX → TFLite (FP32) via `onnx2tf`. ImageNet normalization and the final
   Softmax are **baked into the graph**, so the app feeds raw `[0,1]` pixels and reads real
-  probabilities. Verified bit-identical to the source ONNX in ONNX Runtime: argmax 3/3, max|diff| = 1e-6.
+  probabilities. Verified **numerically equivalent** (not bit-identical) to the source ONNX in ONNX
+  Runtime: argmax 3/3, max|diff| = 1e-6 (well below the 1e-3 threshold at which softmax ranking
+  could flip). PyTorch, ONNX Runtime, and TFLite float paths differ in operator fusion and
+  accumulation order, so bit-equality is not expected; numerical equivalence is the validated claim.
 - **I/O contract:** input `input` `[1,224,224,3] float32` in `[0,1]` (NHWC); output `probabilities`
   `[1,38] float32` softmax. Same 38-class output order as `labels.txt` (the v2.0.0.0 canonical names).
 - **Artifact:** `app/src/main/assets/models/plant_disease.tflite` — 86.8 MB (86,845,656 bytes),
@@ -162,13 +174,67 @@ the slot while it runs), so the user gets their diagnosis immediately.
 
 `.github/workflows/android.yml` runs on every push to `main`: assembleDebug, assembleRelease,
 unit test, lintDebug, verify the release APK is signed (v1 + v2), upload the debug + release APK
-artifacts, and publish the signed APK to the `v2.5.1.0` GitHub Release. The trained DINOv2 TFLite
+artifacts, and publish the signed APK to the GitHub Release. The trained DINOv2 TFLite
 is committed, so CI builds straight from the checkout — no Kaggle pull.
+
+---
+
+## Model and code availability
+
+A reviewer can follow the whole chain — **dataset → preprocessing → training → evaluation →
+conversion → on-device inference** — without contacting the author, because every step is either a
+committed artifact or a public notebook.
+
+- **Source code + deployed model:** this repository. The shipped 86.8 MB
+  `plant_disease.tflite` is at `app/src/main/assets/models/plant_disease.tflite` — the exact byte
+  buffer the on-device interpreter executes. Verify a downloaded copy against the pinned SHA-256
+  (`3660cfdb…`, full digest in `ModelIntegrity.EXPECTED_SHA256`).
+- **Trained weights:** re-running the final Kaggle notebook regenerates the PyTorch checkpoint and
+  the ONNX graph; `models/conversion/convert.py` (with `requirements.txt`) then converts ONNX →
+  TFLite with ImageNet normalization and softmax baked in. The TFLite graph already committed in the
+  APK assets is the shipped one.
+- **Training notebooks (including the failed experiments):** the seven Kaggle notebooks that produced
+  every checkpoint are public, oldest → newest. The failed v2.x iterations (field accuracy
+  11% → 49% → 34%) are kept public on purpose — they show how the model evolved and prevent the final
+  86.7% from looking like it appeared magically.
+
+  | Kaggle slug | Role | Field |
+  | --- | --- | ---: |
+  | `leafguard-finetune-v1` | mobile baseline (no field) | — |
+  | `leafguard-swin-finetune-v1` | multi-source PV pool (lab-only) | — |
+  | `leafguard-swin-finetune-v2` | first field data (lab drowning) | 11.0% |
+  | `leafguard-swin-finetune-v2-1` | cap enforcement (underfit) | 49.0% |
+  | `leafguard-swin-finetune-v2-2` | three-stage schedule (PV ceiling) | 34.0% |
+  | `leafguard-swin-finetune-v3` | ImageNet pivot | 67.3% |
+  | `leafguard-swin-finetune-v3-5-0-0` | DINOv2 + DANN (final) | **86.7%** |
+
+  Each is at `https://www.kaggle.com/code/kushagradubey09/<slug>`; the final one is
+  [`leafguard-swin-finetune-v3-5-0-0`](https://www.kaggle.com/code/kushagradubey09/leafguard-swin-finetune-v3-5-0-0).
+  The per-notebook methodology and diagnosed failures are in the project report's "Per-Version
+  Training Notebook Summaries" appendix (`docs/IEEE_format/LeafGuard_IEEE_Project_Report.pdf`).
+
+## AI-assisted development
+
+AI coding assistants (large language models) were used for routine scaffolding — boilerplate Compose
+layouts, Gradle/CI configuration, conversion-script skeletons, and first-draft prose. All generated
+material was reviewed, revised, tested, and integrated by the author, who is responsible for every
+committed line. The model architecture, the domain-adaptation recipe, the experimental methodology,
+the ablation analysis, and all engineering and validation decisions are the author's own. This
+disclosure is surfaced in-app on the **About** screen (v2.6.0.0) and in
+[`docs/AI_ASSISTANCE.md`](docs/AI_ASSISTANCE.md). The project is not presented as if every
+implementation detail were manually written, and the design and validation are not claimed to be
+AI-generated.
 
 ---
 
 ## Changelog
 
+- **v2.6.0.0** — Transparency & reproducibility release. DINOv2 model **unchanged** (86.7% field).
+  New in-app **About** screen (version, model SHA-256 prefix, model/code availability,
+  AI-assisted-development disclosure); seven public Kaggle training notebooks (including the failed
+  v2.x iterations); updated README + `docs/ARCHITECTURE.md` + new `docs/AI_ASSISTANCE.md`; the
+  "bit-identical" conversion claim corrected to "numerically equivalent" throughout the docs.
+  `versionCode` 10 → 11.
 - **v2.5.1.0** — Result-screen UX + model transparency: model-info card (DINOv2 v3.5 · 3-view TTA),
   model-integrity banner wired from `ModelIntegrity` (was computed but never shown), qualitative
   confidence tier (High/Moderate/Low), per-alternative mini bars, refreshed low-confidence hint.

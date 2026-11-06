@@ -23,8 +23,8 @@ android {
         // (3-view TTA, unchanged). Result screen gains a model-info card, a model-integrity banner
         // (wired from ModelIntegrity -- was computed but never shown), a qualitative confidence tier
         // (High/Moderate/Low), and per-alternative mini bars. README rewritten for v2.5.x.
-        versionCode = 10
-        versionName = "2.5.1.0"
+        versionCode = 11
+        versionName = "2.6.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

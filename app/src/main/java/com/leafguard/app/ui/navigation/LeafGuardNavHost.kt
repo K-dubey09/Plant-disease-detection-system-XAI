@@ -135,6 +135,7 @@ fun LeafGuardNavHost(
                     onOpenPlants = { navController.navigate(Routes.PLANTS) },
                     onOpenImages = { navController.navigate(Routes.IMAGES) },
                     onScan = { navController.navigate(Routes.scanForPlant(null)) },
+                    onOpenAbout = { navController.navigate(Routes.ABOUT) },
                 )
             }
             composable(Routes.PLANTS) {
@@ -164,6 +165,7 @@ fun LeafGuardNavHost(
 
             // --- Secondary ---
             composable(Routes.IMAGES) { ImagesScreen() }
+            composable(Routes.ABOUT) { AboutScreen(onBack = { navController.popBackStack() }) }
             composable(
                 Routes.PLANT_DETAIL,
                 arguments = listOf(navArgument("plantId") { type = NavType.LongType }),

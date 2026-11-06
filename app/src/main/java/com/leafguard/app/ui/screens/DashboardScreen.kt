@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Spa
 import androidx.compose.material3.Card
@@ -44,6 +45,7 @@ fun DashboardScreen(
     onOpenPlants: () -> Unit,
     onOpenImages: () -> Unit,
     onScan: () -> Unit,
+    onOpenAbout: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val scans by viewModel.scans.collectAsStateWithLifecycle()
@@ -83,6 +85,12 @@ fun DashboardScreen(
                 title = stringResource(R.string.nav_images),
                 subtitle = stringResource(R.string.dashboard_action_images),
                 onClick = onOpenImages,
+            )
+            DashboardQuickAction(
+                icon = Icons.Outlined.Info,
+                title = "About LeafGuard",
+                subtitle = "Version, model, and AI disclosure",
+                onClick = onOpenAbout,
             )
         }
     }
