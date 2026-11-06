@@ -1,6 +1,7 @@
 package com.leafguard.app.ui.screens
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -231,7 +232,15 @@ private fun writePdfToUri(
     false
 }
 
-/** Posts a best-effort completion notification on the `exports` channel (created at app start). */
+/**
+ * Posts a best-effort completion notification on the `exports` channel (created at app start).
+ * `POST_NOTIFICATIONS` is declared in the manifest and requested at runtime in [RecordsScreen]
+ * (Android 13+), and the [NotificationManagerCompat.areNotificationsEnabled] guard below no-ops
+ * when the user has disabled notifications. `@SuppressLint("MissingPermission")` silences the
+ * static check on `notify()` because the runtime request lives in a `LaunchedEffect` lint cannot
+ * see -- the runtime safety is real, just not statically visible.
+ */
+@SuppressLint("MissingPermission")
 private fun postExportNotification(context: Context, message: String) {
     val mgr = NotificationManagerCompat.from(context)
     if (!mgr.areNotificationsEnabled()) return
