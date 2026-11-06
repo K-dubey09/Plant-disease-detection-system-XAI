@@ -31,6 +31,7 @@ import androidx.navigation.navArgument
 import com.leafguard.app.domain.model.AuthState
 import com.leafguard.app.ui.auth.AuthViewModel
 import com.leafguard.app.ui.screens.AuthScreen
+import com.leafguard.app.ui.screens.AboutScreen
 import com.leafguard.app.ui.screens.DashboardScreen
 import com.leafguard.app.ui.screens.HistoryScreen
 import com.leafguard.app.ui.screens.ImagesScreen
