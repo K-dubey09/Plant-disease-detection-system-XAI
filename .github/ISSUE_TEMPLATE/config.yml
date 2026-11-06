@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/K-dubey09/Plant-disease-detection-system-XAI/security/advisories/new
+    about: Reporting a security vulnerability? Use a private security advisory, not a public issue. See SECURITY.md.
+  - name: Questions & discussion
+    url: https://github.com/K-dubey09/Plant-disease-detection-system-XAI/discussions
+    about: For questions, usage help, or open-ended discussion, please use GitHub Discussions.

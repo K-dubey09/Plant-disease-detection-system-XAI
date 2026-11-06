@@ -1,0 +1,90 @@
+name: Bug report
+description: Report something that is broken or behaves incorrectly in the app or the model pipeline.
+title: "[bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. A few notes:
+        - **Security vulnerability?** Do **not** use this form — see [SECURITY.md](../../SECURITY/blob/main/SECURITY.md) and report privately.
+        - **Model misclassification** (an 86.7% field accuracy means ~1 in 8 field leaves is wrong) is a model-quality issue, not a bug — it is fine to report here, but please include the predicted vs. expected label.
+        - If you can, attach the About-screen info below so we can confirm the exact build + model.
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: From the in-app About screen (e.g. 2.6.0.0).
+      placeholder: "2.6.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: model-sha
+    attributes:
+      label: Model SHA-256 prefix (from About screen)
+      description: The shipped model digest prefix shown on the About screen, to confirm the buffer was not modified.
+      placeholder: "3660cfdb…"
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device model + Android version
+      placeholder: "e.g. Pixel 6, Android 14; or Samsung M14, Android 13"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Scan / camera capture
+        - Result / diagnosis / confidence
+        - Occlusion heatmap (explainability)
+        - Plants / growth tracking
+        - History / Records / export
+        - About / transparency
+        - Build / CI / Gradle
+        - Model conversion (models/conversion)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered, minimal, from a fresh app launch.
+      placeholder: |
+        1. Open the app and log in.
+        2. Tap Scan, capture a leaf.
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include any error text, the predicted label, or a screenshot if helpful.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots (optional)
+      description: adb logcat output, a screenshot of the result screen, or the source leaf + heatmap. Attach by dragging into the box.
+    validations:
+      required: false

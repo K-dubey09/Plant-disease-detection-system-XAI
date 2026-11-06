@@ -1,0 +1,56 @@
+name: Feature request
+description: Suggest an improvement — a new feature, a model enhancement, a docs or UX change.
+title: "[feat] "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before you file, please skim [`future-proposals/`](../../tree/main/future-proposals) — your
+        idea may already be scoped there, and linking to the relevant proposal helps us prioritize.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - App feature (scan, result, plants, history, records)
+        - Model / accuracy
+        - Explainability (heatmap / XAI)
+        - Dataset / data
+        - Build / CI
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What is currently hard, broken, or missing? Who is affected?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What would you like to happen? Be as concrete as you can.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+
+  - type: input
+    id: proposal-link
+    attributes:
+      label: Related future-proposal (if any)
+      placeholder: "e.g. future-proposals/01_model.md §D"
+    validations:
+      required: false
