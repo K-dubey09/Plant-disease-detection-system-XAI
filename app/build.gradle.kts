@@ -131,6 +131,15 @@ android {
     }
 }
 
+// Room schema export: LeafGuardDatabase declares exportSchema = true, so the Room compiler
+// (KSP) writes a schema JSON snapshot for the current DB version into app/schemas/ on every
+// build. The snapshot is committed (not gitignored) so each migration is reviewable against a
+// captured schema and a future migration can be diffed against the prior version. The directory
+// is relative to the app module so the path is stable across CI and local builds.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
 

@@ -3,13 +3,14 @@ name: Android CI
 on:
   push:
     branches: [ main, master ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main, master ]
 
-# contents:write lets the `gh release create` step publish the signed APK as a Release asset
-# (a raw .apk download with no artifact-zip wrapping). All other permissions default to none.
+# Least-privilege default: read-only. Only the `release` job (which publishes the GitHub
+# Release) overrides this to contents:write below. All other permissions default to none.
 permissions:
-  contents: write
+  contents: read
 
 # Do not let extra CI runs pile up on rapid pushes.
 concurrency:
@@ -21,48 +22,38 @@ jobs:
     name: Build, unit test, lint
     runs-on: ubuntu-latest
     timeout-minutes: 40
-
+    # The build job sees ONLY the Kaggle credentials, used by the optional SHA-verified
+    # model-pull step below. The signing secrets (KEYSTORE_*, KEY_*) are NOT mapped here --
+    # they are exposed only to the `release` job, so a build/PR run can never touch them.
+    # The Kaggle secrets are kept (not removed) so the pull works today and so a future
+    # private-repo model pull can reuse the same scoped-secret pattern.
     env:
       GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.caching=true"
-      # Secrets are mapped to env vars ONCE at the job level. Step `if:` conditions then check
-      # `env.X` (NOT `secrets.X` -- the secrets context is not available in step if-conditionals
-      # in all GitHub Actions validation paths), and run-scripts read `$X` instead of interpolating
-      # `${{ secrets.X }}` (which would risk logging the secret). Empty when the secret is unset
-      # (e.g. a fork PR), so the corresponding step is skipped gracefully.
       KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
-      # Accept the token under either name: the canonical KAGGLE_API_TOKEN, or a
-      # fallback to KAGGLE_KEY (some setups store the KGAT_ token there). The kaggle
-      # CLI authenticates from the KAGGLE_API_TOKEN env var regardless of source.
+      # Accept the token under either name: the canonical KAGGLE_API_TOKEN, or a fallback to
+      # KAGGLE_KEY (some setups store the KGAT_ token there). Empty when unset (a fork PR),
+      # so the pull step is skipped gracefully.
       KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN || secrets.KAGGLE_KEY }}
-      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3  # v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # The ubuntu-latest runner ships with the Android SDK preinstalled at
-      # $ANDROID_HOME (/usr/local/lib/android/sdk) with licenses pre-accepted. We only ensure
-      # the exact platform/build-tools our build targets are present, using a direct sdkmanager
-      # call (the android-actions/setup-android@v3 "packages" input mangled the package name and
-      # failed with "Failed to find package 'platforms;android-35" in a prior run).
+      # ubuntu-latest preinstalls platforms;android-35 + build-tools;35.0.0 with licenses
+      # accepted, so this is a safety net only. GitHub Actions runs bash with `pipefail`, and
+      # `yes | sdkmanager` exits 141 (yes gets SIGPIPE when sdkmanager closes stdin) even when
+      # sdkmanager succeeded -- tolerate non-zero here and let assembleDebug surface any real
+      # missing-platform error.
       - name: Ensure Android platform 35 + build-tools
         shell: bash
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
-        # ubuntu-latest preinstalls platforms;android-35 + build-tools;35.0.0 with licenses
-        # accepted, so this is a safety net only. GitHub Actions runs bash with `pipefail`, and
-        # `yes | sdkmanager` exits 141 (yes gets SIGPIPE when sdkmanager closes stdin) even when
-        # sdkmanager succeeded — so we tolerate non-zero here and let assembleDebug surface any
-        # genuine missing-platform error with a clear message.
         run: |
           set +e
           SDKMGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
@@ -72,33 +63,8 @@ jobs:
           [ -z "$SDKMGR" ] || yes | "$SDKMGR" "platforms;android-35" "build-tools;35.0.0" > /dev/null 2>&1
           exit 0
 
-      # The trained DINOv2 v3.5.0.0 TFLite (86.8 MB, SHA-256 3660cfdb...) is COMMITTED at
-      # app/src/main/assets/models/plant_disease.tflite (under GitHub's 100 MB file limit), so CI
-      # builds straight from the checkout -- no Kaggle pull. (v1.5.0.0/v2.0.0.0 pulled the model
-      # from the private Kaggle dataset because it was .gitignore'd then; v2.5.0.0 commits it so the
-      # ModelIntegrity SHA in ModelIntegrity.EXPECTED_SHA256 matches exactly what ships.) A prior
-      # "Pull trained TFLite model from Kaggle" step that overwrote this file with the dataset's old
-      # Swin-Tiny model is removed -- it would have swapped the DINOv2 out and broken integrity.
-
-      # Decode the release keystore from KEYSTORE_BASE64. The keystore itself is never committed.
-      # KEYSTORE_FILE is written to GITHUB_ENV so build.gradle.kts (which reads System.getenv)
-      # attaches the release signer to the release buildType -- the direct fix for the "problem
-      # parsing the package" install error on unsigned release APKs. Skipped when KEYSTORE_BASE64
-      # is unset (fork PRs); the release build then stays unsigned and Gradle warns.
-      - name: Decode release keystore
-        if: env.KEYSTORE_BASE64 != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/keystore
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > /tmp/keystore/leafguard-release.keystore
-          echo "KEYSTORE_FILE=/tmp/keystore/leafguard-release.keystore" >> "$GITHUB_ENV"
-          echo "Keystore decoded: $(stat -c%s /tmp/keystore/leafguard-release.keystore) bytes"
-          # KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD are already in the job env from secrets,
-          # so the gradle build step sees them directly.
-
       - name: Cache Gradle
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
         with:
           path: |
             ~/.gradle/caches
@@ -109,13 +75,63 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      # Build the debug APK (signed with the pinned debug keystore committed at app/keystores/).
+      # Optional, SHA-256-gated model pull from the private Kaggle dataset
+      # kushagradubey09/plant-disease-xai-models. The trained DINOv2 v3.5 TFLite is COMMITTED
+      # at app/src/main/assets/models/plant_disease.tflite (under GitHub's 100 MB limit), so the
+      # build works straight from the checkout with no pull at all. This step refreshes/verifies
+      # the committed model against the Kaggle-published artifact: it downloads the dataset,
+      # finds any .tflite whose SHA-256 matches ModelIntegrity.EXPECTED_SHA256, and places it
+      # ONLY on an exact digest match -- a stale or wrong artifact never breaks runtime
+      # integrity. On any failure (no creds, no match, network) it warns and keeps the committed
+      # model (continue-on-error). Skipped on forks. The secrets stay scoped to this build job
+      # so a future private-repo pull can reuse the same pattern.
+      - name: Pull + verify model from Kaggle (SHA-256 gated)
+        if: env.KAGGLE_USERNAME != '' && env.KAGGLE_API_TOKEN != ''
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          pip install --quiet kaggle
+          mkdir -p "$HOME/.kaggle"
+          printf '{"username":"%s","key":"%s"}' "$KAGGLE_USERNAME" "$KAGGLE_API_TOKEN" > "$HOME/.kaggle/kaggle.json"
+          chmod 600 "$HOME/.kaggle/kaggle.json"
+          mkdir -p /tmp/kg
+          kaggle datasets download -d kushagradubey09/plant-disease-xai-models -p /tmp/kg --unzip
+          EXPECTED="3660cfdbad212bcd5d307ee61e508382b8968b64d5e6f1feb63ba085267b69e7"
+          DEST="app/src/main/assets/models/plant_disease.tflite"
+          matched=""
+          while IFS= read -r f; do
+            sha="$(sha256sum "$f" | awk '{print $1}')"
+            if [ "$sha" = "$EXPECTED" ]; then matched="$f"; break; fi
+          done < <(find /tmp/kg -name '*.tflite')
+          if [ -n "$matched" ]; then
+            cp "$matched" "$DEST"
+            echo "Pulled v3.5 DINOv2 TFLite from Kaggle; SHA-256 matches EXPECTED_SHA256."
+          else
+            echo "::warning::No .tflite in the Kaggle dataset matched EXPECTED_SHA256 ($EXPECTED). Keeping the committed model."
+          fi
+
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
 
-      # Build the release APK. When KEYSTORE_FILE is set (keystore-decode step ran), Gradle
-      # signs it with the release config; otherwise it is unsigned and Gradle warns.
-      - name: Build release APK
+      # Room schema sync guard: assembleDebug ran KSP, which (re)writes the schema JSON to
+      # app/schemas/ because LeafGuardDatabase.exportSchema = true. Fail if the regenerated
+      # snapshot differs from the committed one, so a schema/migration change can never ship
+      # without its snapshot. Regenerate locally with `./gradlew kspDebugKotlin` and commit.
+      - name: Verify Room schema snapshot is in sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew kspDebugKotlin --stacktrace
+          if ! git diff --quiet -- app/schemas; then
+            echo "::error::Room schema snapshot is out of sync with app/schemas/."
+            echo "Regenerate with ./gradlew kspDebugKotlin and commit app/schemas/."
+            git diff --stat -- app/schemas
+            exit 1
+          fi
+          echo "Room schema snapshot is in sync with the committed app/schemas/."
+
+      - name: Build release APK (unsigned here; signed in the release job)
         run: ./gradlew assembleRelease --stacktrace
 
       - name: Run unit tests
@@ -124,6 +140,106 @@ jobs:
       - name: Run Android Lint
         run: ./gradlew lintDebug --stacktrace
 
+      - name: Upload debug APK
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: leafguard-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+
+      - name: Upload release APK (unsigned)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: leafguard-release-apk-unsigned
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: leafguard-test-reports
+          path: |
+            app/build/reports/tests/
+            app/build/reports/lint-results*.html
+            app/build/test-results/
+          if-no-files-found: warn
+
+  release:
+    name: Sign + publish release APK
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    # Release only from trusted refs: a push to main (the integration branch) or a v* tag.
+    # PRs never run this job. The `release` environment lets the repo owner add required
+    # reviewers / branch protection later; if the environment does not yet exist, GitHub
+    # creates it on first run with no approval rules, so this does not block the release.
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    environment: release
+    # Only this job publishes the GitHub Release, so only it gets contents:write.
+    permissions:
+      contents: write
+    # The release job sees ONLY the signing secrets. Kaggle credentials are NOT mapped here.
+    env:
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.caching=true"
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3  # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Ensure Android platform 35 + build-tools
+        shell: bash
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+        run: |
+          set +e
+          SDKMGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SDKMGR" ] || SDKMGR="$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1)"
+          [ -z "$SDKMGR" ] || yes | "$SDKMGR" --licenses > /dev/null 2>&1
+          [ -z "$SDKMGR" ] || yes | "$SDKMGR" "platforms;android-35" "build-tools;35.0.0" > /dev/null 2>&1
+          exit 0
+
+      # Decode the release keystore from KEYSTORE_BASE64. The keystore is never committed.
+      # KEYSTORE_FILE is written to GITHUB_ENV so build.gradle.kts attaches the release signer
+      # to the release buildType. The signing secrets live only in this job's env.
+      - name: Decode release keystore
+        if: env.KEYSTORE_BASE64 != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/keystore
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > /tmp/keystore/leafguard-release.keystore
+          echo "KEYSTORE_FILE=/tmp/keystore/leafguard-release.keystore" >> "$GITHUB_ENV"
+          echo "Keystore decoded: $(stat -c%s /tmp/keystore/leafguard-release.keystore) bytes"
+
+      - name: Cache Gradle
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/libs.versions.toml', 'gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # Rebuild the release APK with the release signer attached (KEYSTORE_FILE set above).
+      - name: Build signed release APK
+        run: ./gradlew assembleRelease --stacktrace
+
       - name: Verify release APK is signed (v1 + v2 required)
         if: env.KEYSTORE_FILE != ''
         shell: bash
@@ -131,11 +247,10 @@ jobs:
           set -euo pipefail
           APK="$(ls app/build/outputs/apk/release/*.apk | head -1)"
           echo "Release APK: $APK ($(stat -c%s "$APK") bytes)"
-          # --verbose prints "Verified using v1 scheme (RSA)" / "Verified using v2 scheme (...)" lines.
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/sigverify.txt
           # v1 is the scheme every Android installer understands. AGP 8.x omits v1 by default
           # when minSdk >= 24, producing a v2-only APK that some installers reject with
-          # "There was a problem parsing the package". build.gradle.kts forces v1+v2+v3; assert it here.
+          # "There was a problem parsing the package". build.gradle.kts forces v1+v2+v3; assert it.
           grep -q "Verified using v1 scheme" /tmp/sigverify.txt || {
             echo "FAIL: v1 (JAR) signing is MISSING — the APK is v2-only and will not install on some devices."
             exit 1
@@ -146,29 +261,13 @@ jobs:
           }
           echo "Release APK is signed with v1 + v2 (installable on all Android 8+ installers)."
 
-      - name: Upload debug APK
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: leafguard-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: warn
-
-      - name: Upload release APK
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: leafguard-release-apk
-          path: app/build/outputs/apk/release/*.apk
-          if-no-files-found: warn
-
       # Publish the signed release APK as a GitHub Release asset. Release assets are served as
       # RAW files (no upload-artifact ZIP wrapping), so a user downloads app-release.apk directly
-      # and taps to install — no extraction step. Runs only on main pushes that produced a signed
-      # release (KEYSTORE_FILE set); PRs and unsigned builds skip it. The TAG + ASSET name track
-      # the versionName in app/build.gradle.kts — bump them together when cutting a release.
+      # and taps to install. Runs only on main pushes / v* tags that produced a signed release
+      # (KEYSTORE_FILE set). The TAG + ASSET name track the versionName in app/build.gradle.kts —
+      # bump them together when cutting a release.
       - name: Publish signed APK to GitHub Release
-        if: github.ref == 'refs/heads/main' && env.KEYSTORE_FILE != ''
+        if: env.KEYSTORE_FILE != ''
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -189,14 +288,3 @@ jobs:
             echo "Created release $TAG."
           fi
           gh release view "$TAG" --json assets --jq '.assets[] | "Asset: \(.name)  \(.size) bytes  \(.url)"'
-
-      - name: Upload test reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: leafguard-test-reports
-          path: |
-            app/build/reports/tests/
-            app/build/reports/lint-results*.html
-            app/build/test-results/
-          if-no-files-found: warn

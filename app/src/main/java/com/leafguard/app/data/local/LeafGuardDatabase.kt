@@ -8,8 +8,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 /**
  * LeafGuard's local store. Grows one entity group per phase: Phase 3 adds [Plant]; Phase 5 adds
  * [ScanEntity] (the scans table, linked to plants by a nullable foreign key with ON DELETE SET
- * NULL so a plant's diagnosis history survives its deletion). `exportSchema = false` keeps the
- * build lean for now; enable it once the schema stabilizes before production.
+ * NULL so a plant's diagnosis history survives its deletion). `exportSchema = true` writes the
+ * Room schema JSON to `app/schemas/` (committed) so every migration is reviewable against a
+ * captured snapshot — see the v1/v2/v3 migration tests and the committed `3.json`.
  *
  * Version 2 ships the scans table; [MIGRATION_1_2] adds it for existing v1 installs. Version 3
  * (Phase 6 Images) adds [ScanEntity.sourceImagePath] / [saliencyImagePath] so the gallery can
@@ -20,7 +21,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @Database(
     entities = [Plant::class, ScanEntity::class],
     version = 3,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class LeafGuardDatabase : RoomDatabase() {
     abstract fun plantDao(): PlantDao

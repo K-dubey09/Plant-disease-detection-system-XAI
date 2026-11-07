@@ -1,30 +1,36 @@
 # LeafGuard — Architecture
 
 ## Layered architecture (MVVM + Clean Architecture)
-
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│  UI layer  (app/src/main/java/.../ui)                            │
-│  Composable screens + ViewModels (Hilt-injected).               │
-│  Observe StateFlow from ViewModels; dispatch user intents.      │
-└───────────────▲──────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  UI layer  (app/src/main/java/.../ui)                                │
+│  Composable screens + ViewModels (Hilt-injected).                    │
+│  Observe StateFlow from ViewModels; dispatch user intents.           │
+└──────────────────────────────────────────────────────────────────────┘
                 │ exposes UI state (StateFlow), accepts intents
-┌───────────────┴──────────────────────────────────────────────────┐
-│  Domain layer  (.../domain)                                      │
-│  Pure Kotlin: use-cases (ScanLeaf, AttachScanToPlant,            │
-│  GenerateSuggestions), model abstractions (Plant, ScanRecord,    │
-│  Diagnosis, Explanation). No Android framework imports.          │
-└───────────────▲──────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  Domain layer  (.../domain)                                          │
+│  IMPLEMENTED: repository interfaces (PlantRepository,                │
+│  AuthRepository, ScanRepository incl. attachScanToPlant) +           │
+│  domain models (DiseaseLabel, Diagnosis, Severity,                   │
+│  TreatmentStage, Suggestion, AuthState, AuthOutcome).                │
+│  PROPOSED (not yet built): standalone use-case classes               │
+│  (ScanLeaf, AttachScanToPlant, GenerateSuggestions) —                │
+│  today the scan→diagnose→persist orchestration lives in              │
+│  the ViewModels. No Android framework imports.                       │
+└──────────────────────────────────────────────────────────────────────┘
                 │ calls repository / inference interfaces
-┌───────────────┴──────────────────────────────────────────────────┐
-│  Data layer  (.../data)                                          │
-│  Room (entities, DAOs, LeafGuardDatabase), repositories,         │
-│  EncryptedSharedPreferences (PinStore), DiseaseClassifier (TFLite), │
-│  SaliencyGenerator. Hilt modules bind these to interfaces.        │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  Data layer  (.../data)                                              │
+│  Room (entities, DAOs, LeafGuardDatabase), repositories,             │
+│  EncryptedSharedPreferences (PinStore), DiseaseClassifier (TFLite),  │
+│  SaliencyGenerator. Hilt modules bind these to interfaces.           │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-## Key components (target state across phases)
+
+> **Implemented vs proposed.** The diagram shows the *target* layered architecture. The Domain box marks what is built today versus proposed. The use-case classes `ScanLeaf`, `AttachScanToPlant`, and `GenerateSuggestions` are **not yet implemented** as standalone classes — the actual `domain/` tree contains only repository interfaces (`PlantRepository`, `AuthRepository`, `ScanRepository`) and domain models (`DiseaseLabel`, `Diagnosis`, `Severity`, `TreatmentStage`, `Suggestion`, `AuthState`, `AuthOutcome`). `AttachScanToPlant` exists today as a `ScanRepository.attachScanToPlant(scanId, plantId)` method, not a class. The scan→classify→saliency→persist orchestration currently lives inside the ViewModels (for example `ScanViewModel.analyze` calls `DiseaseClassifier.classify` and then `ScanRepository.saveScan` directly). Extracting these into discrete use-case classes is a proposed Clean-Architecture refactor tracked in the improvement roadmap, not a component that ships in the current build.
+## Key components (implemented)
 
 | Component | Layer | Phase | Responsibility |
 | --- | --- | --- | --- |
@@ -43,6 +49,16 @@
 | `SuggestionsEngine`, `SuggestionParser`, `Severity`/`TreatmentStage` | Domain | 7 | Map 38 classes → severity tier + staged treatment (Immediate/Short-term/Long-term) + prevention; parser reads the production JSON (org.json), engine exposes `suggest`/`severityFor` |
 | `LeafGuardDatabaseMigrationTest`, `PdfExporter.formatRecordLine`/`displayName` | Test | 8 | Robolectric JVM test seeds a real v1 DB → opens at v3 with both migrations, asserting the plant survives + scans gains the image-path columns + a scan with paths round-trips; PdfExporter record-line logic extracted as `internal` pure helpers + JVM-tested (the `PdfDocument` write stays instrumented-only). Tagged v1.0.0 release; APK excl-model 25.0 MB. |
 
+
+## Proposed architecture (not yet implemented)
+
+The Clean-Architecture diagram above lists three standalone use-case classes in the Domain layer. These are the intended target, not the current source tree:
+
+- `ScanLeaf` — a domain use-case that would own the scan→classify→saliency→persist flow,   encapsulating the multi-step orchestration currently inlined in `ScanViewModel.analyze`.
+- `AttachScanToPlant` — a domain use-case that would link a scan to a plant. Today this   exists only as `ScanRepository.attachScanToPlant(scanId, plantId)`; a use-case class would   let the ViewModel call a single domain entry point and keep the repository a pure data   interface.
+- `GenerateSuggestions` — a domain use-case that would map a `Diagnosis` to staged   `Suggestion`s. Today the suggestion logic lives in `SuggestionEngine`   (`data/inference`), called directly from the result flow.
+
+The implemented `domain/` package today holds only `domain/model/` (`AuthOutcome`, `AuthState`, `DiseaseModels`) and `domain/repository/` (`AuthRepository`, `PlantRepository`, `ScanRepository`). Adopting the use-case classes is ranked in the improvement roadmap; until then, ViewModels are the orchestration layer and the proposed classes should not be read as shipped components.
 ## Navigation graph
 
 ```

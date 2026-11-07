@@ -37,6 +37,40 @@ Entries are grouped under a version heading (`Added` / `Changed` / `Fixed` / `Re
   flags are not set — re-runs reproduce splits but not bit-identical weights); (4) a model-versus-
   application versioning note (independent version streams that do not necessarily advance together).
   — 2026-11-06 23:51 UTC, Kushagra Dubey
+- Room schema export enabled. `LeafGuardDatabase` now declares `exportSchema = true` and a KSP
+  `room.schemaLocation` arg writes the schema JSON to `app/schemas/` on every build. The v3
+  snapshot (`app/schemas/com.leafguard.app.data.local.LeafGuardDatabase/3.json`) is committed so
+  every migration is reviewable against a captured schema, and a CI guard
+  (`./gradlew kspDebugKotlin` + `git diff -- app/schemas`) fails the build if the snapshot drifts.
+- Optional SHA-256-gated Kaggle model pull in CI. The build job downloads the trained TFLite from
+  the private Kaggle dataset `kushagradubey09/plant-disease-xai-models` and places it ONLY if its
+  SHA-256 matches `ModelIntegrity.EXPECTED_SHA256`, falling back to the committed model on any
+  mismatch or failure (`continue-on-error`). Keeps the Kaggle credentials scoped to the build job
+  for future private-repo pulls without risking runtime model integrity.
+  — 2026-11-07 00:58 UTC, Kushagra Dubey
+
+### Changed
+- `docs/ARCHITECTURE.md` now distinguishes IMPLEMENTED components from the PROPOSED use-case
+  architecture. The Domain box labels what is built today (repository interfaces + domain models,
+  with `attachScanToPlant` as a `ScanRepository` method and scan→diagnose→persist orchestration in
+  the ViewModels) versus the proposed standalone use-case classes (`ScanLeaf`, `AttachScanToPlant`,
+  `GenerateSuggestions`), which are not in the source tree. The "Key components" heading is
+  relabelled "implemented" and a "Proposed architecture (not yet implemented)" subsection is added.
+- Android CI workflow split into a `build` job (build / unit test / lint / artifacts) and a
+  `release` job (sign + publish), so signing secrets and the publish permission are isolated from
+  PR/build runs.
+  — 2026-11-07 00:58 UTC, Kushagra Dubey
+
+### Security
+- Android CI least-privilege hardening. Top-level `permissions: contents: read`; `contents: write`
+  granted ONLY to the `release` job. Signing secrets (`KEYSTORE_*`, `KEY_*`) exposed only to the
+  `release` job; Kaggle secrets (`KAGGLE_USERNAME`, `KAGGLE_API_TOKEN`) exposed only to the `build`
+  job — kept, not removed, so the model-pull step and future private-repo pulls still work. The
+  `release` job is restricted to pushes on `main` or `v*` tags and runs under a `release`
+  environment (auto-created on first run with no approval rules). All third-party actions
+  (`checkout`, `setup-java`, `cache`, `upload-artifact`) pinned to verified commit SHAs with
+  `# v4` comments.
+  — 2026-11-07 00:58 UTC, Kushagra Dubey
 
 ---
 
